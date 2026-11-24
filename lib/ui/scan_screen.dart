@@ -278,7 +278,7 @@ class _Viewfinder extends StatelessWidget {
                   tween: Tween(begin: flash == 0 ? 0 : .45, end: 0),
                   duration: const Duration(milliseconds: 450),
                   builder: (_, v, _) =>
-                      ColoredBox(color: AppColors.blueSoft.withValues(alpha: v)),
+                      ColoredBox(color: AppColors.secondarySoft.withValues(alpha: v)),
                 ),
               ),
             ],
@@ -294,7 +294,7 @@ class _Corners extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const side = BorderSide(color: AppColors.blueSoft, width: 3);
+    const side = BorderSide(color: AppColors.secondarySoft, width: 3);
     const r = Radius.circular(10);
     Widget corner(Alignment a, Border b, BorderRadius br) => Align(
           alignment: a,
@@ -361,9 +361,9 @@ class _Feedback extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (tone) {
-      _Tone.info => AppColors.blue,
+      _Tone.info => AppColors.secondary,
       _Tone.ok => AppColors.primary,
-      _Tone.error => AppColors.pink,
+      _Tone.error => AppColors.danger,
     };
     return Semantics(
       liveRegion: true,
@@ -379,7 +379,7 @@ class _Feedback extends StatelessWidget {
           text,
           style: AppText.body(15,
               weight: FontWeight.w600,
-              color: tone == _Tone.error ? AppColors.pinkSoft : AppColors.text),
+              color: tone == _Tone.error ? AppColors.dangerSoft : AppColors.text),
         ),
       ),
     );

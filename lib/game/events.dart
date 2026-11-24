@@ -218,3 +218,146 @@ const Map<EventCard, EventCardFace> eventCardFaces = {
 extension EventCardFaceX on EventCard {
   EventCardFace get face => eventCardFaces[this]!;
 }
+
+/// Expert mode quiz: one question per Event, shown in English. The players'
+/// answers decide whether the Event happens (see [EventSide] rules in the
+/// rulebook): Blue Events need more than half right, Red Events are blocked
+/// when more than half are right, Chaos Events always happen.
+class EventQuiz {
+  const EventQuiz({
+    required this.question,
+    required this.answers,
+    required this.correct,
+    required this.explanation,
+  });
+
+  final String question;
+
+  /// The three answers, in a fixed order. The game shuffles them per draw.
+  final List<String> answers;
+
+  /// Index of the right answer in [answers].
+  final int correct;
+
+  /// Short explanation shown with the right answer.
+  final String explanation;
+}
+
+const Map<EventCard, EventQuiz> eventQuizzes = {
+  EventCard.securityAudit: EventQuiz(
+    question: 'What is the main goal of a security audit?',
+    answers: [
+      'Find weaknesses before attackers do',
+      'Punish employees who made mistakes',
+      'Replace the antivirus',
+    ],
+    correct: 0,
+    explanation:
+        'An audit checks systems and habits to find security gaps, so they can be fixed before anyone exploits them.',
+  ),
+  EventCard.c2ServerDown: EventQuiz(
+    question: 'What is a C2 (Command & Control) server?',
+    answers: [
+      'The company\'s main backup server',
+      'A server attackers use to control infected machines',
+      'A server that filters spam',
+    ],
+    correct: 1,
+    explanation:
+        'Infected machines call home to the C2 server to receive orders. Without it, the attackers can no longer coordinate.',
+  ),
+  EventCard.honeypot: EventQuiz(
+    question: 'What is a honeypot?',
+    answers: [
+      'A vault that stores passwords',
+      'A firewall rule that blocks all traffic',
+      'A decoy system that attracts and detects attackers',
+    ],
+    correct: 2,
+    explanation:
+        'A honeypot looks like an easy target. Attackers who touch it reveal themselves while the defenders watch.',
+  ),
+  EventCard.powerOutage: EventQuiz(
+    question: 'What keeps critical servers running during a power cut?',
+    answers: [
+      'A UPS (uninterruptible power supply)',
+      'A VPN',
+      'A proxy server',
+    ],
+    correct: 0,
+    explanation:
+        'A UPS gives battery power long enough to switch to a generator or to shut the servers down safely.',
+  ),
+  EventCard.zeroDay: EventQuiz(
+    question: 'What is a zero-day vulnerability?',
+    answers: [
+      'A flaw fixed on the day it is found',
+      'A flaw unknown to the vendor, with no patch yet',
+      'A virus that activates at midnight',
+    ],
+    correct: 1,
+    explanation:
+        'Defenders have had "zero days" to fix it: no patch exists yet, which makes it very dangerous.',
+  ),
+  EventCard.maintenanceWindow: EventQuiz(
+    question: 'Why do companies plan maintenance windows?',
+    answers: [
+      'To give employees a day off',
+      'To delete old accounts automatically',
+      'To install updates with minimal impact on users',
+    ],
+    correct: 2,
+    explanation:
+        'Patching on a planned schedule keeps systems secure without stopping people in the middle of their work.',
+  ),
+  EventCard.remoteWorkDay: EventQuiz(
+    question:
+        'What is the safest way to connect to the company network from home?',
+    answers: [
+      'Through the company VPN',
+      'Through free public Wi-Fi',
+      'With a colleague\'s account',
+    ],
+    correct: 0,
+    explanation:
+        'A VPN encrypts the connection between your computer and the company network. Never share accounts.',
+  ),
+  EventCard.phishing: EventQuiz(
+    question:
+        'You get an urgent email asking you to reset your password with a link. What do you do?',
+    answers: [
+      'Click quickly before it expires',
+      'Report it to the IT / security team',
+      'Forward it to colleagues',
+    ],
+    correct: 1,
+    explanation:
+        'Urgency is a classic phishing trick. One report lets the security team block the email for everyone.',
+  ),
+  EventCard.blackFridayRush: EventQuiz(
+    question: 'What is a common online scam during Black Friday?',
+    answers: [
+      'Banks closing accounts',
+      'Free antivirus updates',
+      'Fake shopping sites with too-good-to-be-true deals',
+    ],
+    correct: 2,
+    explanation:
+        'Scammers copy real shops to steal payment details. Always check the website address before paying.',
+  ),
+  EventCard.ddos: EventQuiz(
+    question: 'What does a DDoS attack do?',
+    answers: [
+      'Floods a service with traffic so it becomes unavailable',
+      'Steals passwords from a database',
+      'Encrypts files and asks for a ransom',
+    ],
+    correct: 0,
+    explanation:
+        'Thousands of machines send requests at the same time until the service can no longer answer. Encrypting files for a ransom is ransomware.',
+  ),
+};
+
+extension EventQuizX on EventCard {
+  EventQuiz get quiz => eventQuizzes[this]!;
+}

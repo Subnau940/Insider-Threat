@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import '../game/models.dart';
 import '../theme/app_theme.dart';
+import 'rules_screen.dart';
 import 'widgets.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -41,14 +41,16 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             SizedBox(height: compact ? 16 : 24),
-            const TagChip('Narrator companion', pink: true),
+            const TagChip('Narrator companion'),
             const Spacer(),
             NeonButton(label: 'New game', onPressed: onNewGame),
             const SizedBox(height: 12),
             NeonButton(
               label: 'Rules',
               variant: NeonVariant.ghost,
-              onPressed: () => showRolesSheet(context),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const RulesScreen()),
+              ),
             ),
             const SizedBox(height: 14),
             const SizedBox(
@@ -61,55 +63,4 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-void showRolesSheet(BuildContext context) {
-  showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    builder: (ctx) => SizedBox(
-      height: MediaQuery.sizeOf(ctx).height * .86,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-        children: [
-          Text('Roles', style: AppText.ui(32, weight: FontWeight.w700)),
-          const SizedBox(height: 14),
-          for (final id in roleDisplayOrder)
-            Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: AppColors.line),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      TeamDot(id.info.team),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(id.info.name,
-                            style: AppText.ui(18, weight: FontWeight.w700)),
-                      ),
-                      Lbl(id.info.character),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(id.info.power,
-                      style: AppText.body(14,
-                          weight: FontWeight.w400,
-                          color: AppColors.textSoft,
-                          height: 1.45)),
-                  const SizedBox(height: 8),
-                  Lbl('Wakes: ${id.info.wakes}'),
-                ],
-              ),
-            ),
-        ],
-      ),
-    ),
-  );
 }

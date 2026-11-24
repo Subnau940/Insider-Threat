@@ -4,6 +4,7 @@ import '../game/game_controller.dart';
 import '../game/guide_step.dart';
 import '../theme/app_theme.dart';
 import 'event_draw/event_draw_panel.dart';
+import 'quiz_panel.dart';
 import 'widgets.dart';
 
 /// The Narrator's main screen, used for every night and day step.
@@ -144,7 +145,7 @@ class _StepBody extends StatelessWidget {
             TextSpan(
               text: 'Do  ',
               style: AppText.body(14,
-                  weight: FontWeight.w700, color: AppColors.blueSoft),
+                  weight: FontWeight.w700, color: AppColors.secondarySoft),
             ),
             TextSpan(text: step.todo),
           ],
@@ -153,6 +154,8 @@ class _StepBody extends StatelessWidget {
             weight: FontWeight.w400, color: AppColors.muted, height: 1.5),
       ),
       if (step.secret != null) SecretCard(text: step.secret!),
+      if (step.quiz != null)
+        QuizPanel(spec: step.quiz!, onCount: game.setQuizCorrect),
       if (step.report != null) DownList(entries: step.report!),
       if (step.ddos != null && step.ddos!.upcoming.isNotEmpty)
         Lbl('Next: ${step.ddos!.upcoming.join(' · ')}'),

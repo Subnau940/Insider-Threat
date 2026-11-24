@@ -66,3 +66,16 @@ abstract final class Cod {
   static const c900 = Color(0xFF1A1A19);
   static const c950 = Color(0xFF0B0B0A);
 }
+
+/// Red. Not part of the chosen ramps: only the steps the app needs, kept
+/// from the previous palette so the Red Team and danger read as red.
+abstract final class Signal {
+  static const c200 = Color(0xFFFF9DAE);
+  static const c400 = Color(0xFFFF4D6A);
+  static const c500 = Color(0xFFE63956);
+}
+
+/// Violet. Not part of the chosen ramps: only the Purple Team uses it.
+abstract final class Violet {
+  static const c400 = Color(0xFFA97BFF);
+}

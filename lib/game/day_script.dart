@@ -77,6 +77,7 @@ GuideStep _buildDay(GameController c) {
     case DayStage.event:
       final ev = c.todayEvent;
       final info = ev?.info;
+      final forced = c._quizSkipped;
       return GuideStep(
         kind: StepKind.event,
         kicker: 'Expert mode · Event of the day',
@@ -85,18 +86,126 @@ GuideStep _buildDay(GameController c) {
         tag: info?.side.label,
         say: info == null
             ? ''
-            : 'Event of the day: ${info.title}. ${info.description}',
-        todo: info?.howTo ?? '',
+            : forced
+                ? 'Event of the day: ${info.title}. ${info.description}'
+                : 'Event of the day: ${info.title}. ${info.description} But first, a quiz question: your answers decide if it happens.',
+        todo: forced
+            ? info?.howTo ?? ''
+            : 'Read the name and the description. Then show the quiz question.',
         event: ev,
         banner: banner,
+        primaryLabel: forced ? 'Next' : 'Show the question',
         sfxName: 'Glitch',
         stepNo: stepNo,
         total: total,
         canBack: canBack,
       );
 
+    case DayStage.quiz:
+      final ev = c.todayEvent!;
+      final spec = _quizSpec(c, ev, revealed: false);
+      final lines = [
+        for (var i = 0; i < spec.answers.length; i++) '${i + 1}: ${spec.answers[i]}.',
+      ].join(' ');
+      return GuideStep(
+        kind: StepKind.quiz,
+        kicker: 'Quiz · ${ev.info.title}',
+        title: 'Quiz question',
+        sub: '${spec.alive} players answer',
+        tag: ev.info.side.label,
+        say:
+            '${spec.question} $lines You have ten seconds to think. No talking.',
+        todo:
+            'Read the question and the 3 answers. When the timer ends, say: "Three... two... one... show your answer!" Every player still in the game shows 1, 2 or 3 fingers at the same time.',
+        quiz: spec,
+        clock: ClockSpec(
+          id: 'quiz-${c.night}',
+          seconds: 10,
+          controls: false,
+          label: 'Thinking time',
+        ),
+        banner: banner,
+        primaryLabel: 'Reveal the answer',
+        sfxName: 'Clock ticking',
+        stepNo: stepNo,
+        total: total,
+        canBack: canBack,
+      );
+
+    case DayStage.quizAnswer:
+      final ev = c.todayEvent!;
+      final spec = _quizSpec(c, ev, revealed: true);
+      final right = spec.answers[spec.correct];
+      final happens = spec.happens;
+      return GuideStep(
+        kind: StepKind.quizAnswer,
+        kicker: 'Quiz · ${ev.info.title}',
+        title: 'The answer',
+        sub: 'Answer ${spec.correct + 1}',
+        tag: ev.info.side.label,
+        say: 'The right answer was number ${spec.correct + 1}: $right. ${spec.explanation}',
+        todo:
+            'Count the players who showed ${spec.correct + 1} finger${spec.correct == 0 ? '' : 's'} and tap that number. More than half means at least ${spec.needed} of ${spec.alive}.',
+        quiz: spec,
+        banner: banner,
+        canContinue: spec.correctCount != null,
+        primaryLabel: happens == null
+            ? 'Enter the right answers'
+            : happens
+                ? '${ev.info.title} happens'
+                : '${ev.info.title} is blocked',
+        primaryStyle:
+            happens == true && ev.info.side == EventSide.red ? PrimaryStyle.red : PrimaryStyle.primary,
+        sfxName: 'Glitch',
+        stepNo: stepNo,
+        total: total,
+        canBack: canBack,
+      );
+
+    case DayStage.eventResult:
+      final ev = c.todayEvent!;
+      final info = ev.info;
+      final right = c.quizCorrect ?? 0;
+      final alive = c.alivePlayers.length;
+      final score = '$right of $alive ${right == 1 ? 'player' : 'players'} found the right answer.';
+      final happens = c.eventOutcome == EventOutcome.happens;
+      final (say, sub) = switch (info.side) {
+        EventSide.blue => happens
+            ? ('$score More than half: the Blue Team gets the advantage. ${info.title} happens. ${info.description}',
+                'More than half were right')
+            : ('$score Not enough: ${info.title} does not happen.',
+                'Not enough right answers'),
+        EventSide.red => happens
+            ? ('$score Not enough: the company was not ready. ${info.title} happens. ${info.description}',
+                'Not enough right answers')
+            : ('$score More than half: the company was ready. ${info.title} is blocked.',
+                'More than half were right'),
+        EventSide.chaos => (
+            '$score Chaos Events always happen: ${info.title} happens. ${info.description}',
+            'Chaos always happens'
+          ),
+      };
+      final todo = happens
+          ? info.howTo
+          : 'The Event is blocked: no effect today or tonight. Move on.';
+      return GuideStep(
+        kind: StepKind.eventResult,
+        kicker: 'Quiz result',
+        title: happens ? '${info.title} happens' : '${info.title} blocked',
+        sub: sub,
+        tag: info.side.label,
+        say: say,
+        todo: todo,
+        banner: banner,
+        primaryLabel: 'Next',
+        sfxName: happens ? 'Glitch' : 'Lockdown',
+        stepNo: stepNo,
+        total: total,
+        canBack: canBack,
+      );
+
     case DayStage.debate:
-      if (c.todayEvent == EventCard.ddos && c.ddosOrder.isNotEmpty) {
+      if (c.activeEvent == EventCard.ddos && c.ddosOrder.isNotEmpty) {
         final order = c.ddosOrder;
         final i = min(c.ddosIndex, order.length - 1);
         final current = c.players[order[i]].name;
@@ -137,7 +246,7 @@ GuideStep _buildDay(GameController c) {
         kicker: c.debateSeconds == 60 ? 'One minute' : 'Three minutes',
         title: 'Debate',
         sub: '${c.alivePlayers.length} machines online',
-        say: c.todayEvent == EventCard.maintenanceWindow
+        say: c.activeEvent == EventCard.maintenanceWindow
             ? 'Incident Review is open. Argue, accuse, defend. Today there will be no quarantine.'
             : 'Incident Review is open. Argue, accuse, defend.',
         todo: 'Let the table talk. Eliminated players stay silent.',
@@ -173,7 +282,7 @@ GuideStep _buildDay(GameController c) {
       final cisoP = c.ciso == null ? null : c.players[c.ciso!];
       final pick = c.sel('vote').firstOrNull;
       final none = c.hasNone('vote');
-      final silent = c.todayEvent == EventCard.remoteWorkDay;
+      final silent = c.activeEvent == EventCard.remoteWorkDay;
       final linked = c.link.length == 2 &&
               c.link.every((i) => c.players[i].alive)
           ? ' ${c.players[c.link[0]].name} and ${c.players[c.link[1]].name} share a VPN tunnel: they cannot vote against each other.'
@@ -234,6 +343,22 @@ GuideStep _buildDay(GameController c) {
         total: total,
       );
   }
+}
+
+/// The quiz of today's Event, with the answers in their shuffled order.
+QuizSpec _quizSpec(GameController c, EventCard ev, {required bool revealed}) {
+  final q = ev.quiz;
+  final order = c.quizOrder;
+  return QuizSpec(
+    question: q.question,
+    answers: [for (final i in order) q.answers[i]],
+    correct: order.indexOf(q.correct),
+    explanation: q.explanation,
+    side: ev.info.side,
+    revealed: revealed,
+    alive: c.alivePlayers.length,
+    correctCount: c.quizCorrect,
+  );
 }
 
 /// Dead Man's Switch shots and CISO successors.

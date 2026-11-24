@@ -21,6 +21,9 @@ enum StepKind {
   morning,
   election,
   event,
+  quiz,
+  quizAnswer,
+  eventResult,
   debate,
   vote,
   verdict,
@@ -130,6 +133,55 @@ class PhishRow {
   final bool? clicked;
 }
 
+/// The Expert mode quiz shown after an Event is drawn.
+class QuizSpec {
+  const QuizSpec({
+    required this.question,
+    required this.answers,
+    required this.correct,
+    required this.explanation,
+    required this.side,
+    required this.revealed,
+    required this.alive,
+    required this.correctCount,
+  });
+
+  final String question;
+
+  /// Answers in the order shown to the players (already shuffled).
+  final List<String> answers;
+
+  /// Index of the right answer in [answers].
+  final int correct;
+  final String explanation;
+  final EventSide side;
+
+  /// False while the players think, true once the answer is shown.
+  final bool revealed;
+
+  /// Players still in the game: they are the ones who answer.
+  final int alive;
+
+  /// Right answers entered by the Narrator, null until entered.
+  final int? correctCount;
+
+  /// "More than half" of the players still in the game.
+  int get needed => alive ~/ 2 + 1;
+
+  bool? get majority => correctCount == null ? null : correctCount! >= needed;
+
+  /// Whether the Event will happen with the entered count (null until entered).
+  bool? get happens {
+    final m = majority;
+    if (m == null) return null;
+    return switch (side) {
+      EventSide.blue => m,
+      EventSide.red => !m,
+      EventSide.chaos => true,
+    };
+  }
+}
+
 class DdosSpec {
   const DdosSpec({
     required this.current,
@@ -166,6 +218,7 @@ class GuideStep {
     this.event,
     this.phish,
     this.ddos,
+    this.quiz,
     this.canContinue = true,
     this.canBack = true,
     this.primaryLabel = 'Next',
@@ -206,6 +259,7 @@ class GuideStep {
   final EventCard? event;
   final List<PhishRow>? phish;
   final DdosSpec? ddos;
+  final QuizSpec? quiz;
 
   final bool canContinue;
   final bool canBack;

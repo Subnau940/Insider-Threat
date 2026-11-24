@@ -28,6 +28,7 @@ class RoleInfo {
     required this.name,
     required this.team,
     required this.character,
+    required this.werewolf,
     required this.tagline,
     required this.wakes,
     required this.power,
@@ -40,6 +41,9 @@ class RoleInfo {
 
   /// Character name printed on the physical card.
   final String character;
+
+  /// Matching role in the original Werewolf game.
+  final String werewolf;
   final String tagline;
   final String wakes;
   final String power;
@@ -54,10 +58,11 @@ const Map<RoleId, RoleInfo> roleInfos = {
     name: 'Red Team',
     team: Team.red,
     character: 'GHOSTLOAD',
+    werewolf: 'Werewolf',
     tagline: 'The hooded infiltrator with a rogue USB key.',
     wakes: 'Every night, together.',
     power:
-        'Know each other. Each night they silently agree on one machine to compromise. They cannot target a fellow Red Team member.',
+        'Know each other. Each night they silently agree on one employee to compromise. They cannot target a fellow Red Team member.',
     unique: false,
   ),
   RoleId.defender: RoleInfo(
@@ -65,6 +70,7 @@ const Map<RoleId, RoleInfo> roleInfos = {
     name: 'Defender',
     team: Team.blue,
     character: 'BULWARK',
+    werewolf: 'Villager',
     tagline: 'The frontline guard, shield up.',
     wakes: 'Never.',
     power: 'No special power. Wins through logic, observation and the vote.',
@@ -75,16 +81,18 @@ const Map<RoleId, RoleInfo> roleInfos = {
     name: 'Threat Hunter',
     team: Team.blue,
     character: 'TRACER',
+    werewolf: 'Seer',
     tagline: 'The seeker, radar always on.',
     wakes: 'Every night.',
     power:
-        'Points at one machine. The Narrator silently shows them that player\'s role card.',
+        'Points at one player. The Narrator silently shows them that player\'s role card.',
   ),
   RoleId.socAnalyst: RoleInfo(
     id: RoleId.socAnalyst,
     name: 'SOC Analyst',
     team: Team.blue,
     character: 'NIGHTWATCH',
+    werewolf: 'Little Girl',
     tagline: 'The 24/7 monitoring operator.',
     wakes: 'Never called, may peek.',
     power:
@@ -95,40 +103,44 @@ const Map<RoleId, RoleInfo> roleInfos = {
     name: 'Incident Responder',
     team: Team.blue,
     character: 'RESPAWN',
+    werewolf: 'Witch',
     tagline: 'Backup case in one hand, kill switch in the other.',
     wakes: 'Every night, after the Red Team.',
     power:
-        'Sees tonight\'s victim. Two single-use tools: Backup Restore (save the victim) and Kill Process (eliminate any machine).',
+        'Sees tonight\'s victim. Two single-use tools: Backup Restore (save the victim) and Kill Process (eliminate any player). Each once per game; they may save themselves.',
   ),
   RoleId.deadMansSwitch: RoleInfo(
     id: RoleId.deadMansSwitch,
     name: 'Dead Man\'s Switch',
     team: Team.blue,
     character: 'FAILSAFE',
+    werewolf: 'Hunter',
     tagline: 'Armed, timer at 00:00.',
     wakes: 'Only when eliminated.',
     power:
-        'When it goes down, it immediately takes one machine of its choice down with it.',
+        'When it goes down, it immediately takes one player of its choice down with it.',
   ),
   RoleId.networkEngineer: RoleInfo(
     id: RoleId.networkEngineer,
     name: 'Network Engineer',
     team: Team.blue,
     character: 'LINKSMITH',
+    werewolf: 'Cupid',
     tagline: 'Cable on the shoulder, RJ45 in hand.',
     wakes: 'First night only.',
     power:
-        'Links two machines with a VPN Tunnel. If one goes down, the other goes down too. Linked players never vote against each other.',
+        'Links two players with a VPN Tunnel. If one goes down, the other goes down too. Linked players never vote against each other.',
   ),
   RoleId.purple: RoleInfo(
     id: RoleId.purple,
     name: 'Purple Team',
     team: Team.purple,
     character: 'DUALBOOT',
+    werewolf: 'White Werewolf',
     tagline: 'Half red, half blue, loyal to no one.',
     wakes: 'Every night with the Red Team + alone every second night.',
     power:
-        'Seen by the Red Team as one of their own. Every second night it may eliminate one Red Team member. Wins by being the last machine standing.',
+        'Seen by the Red Team as one of their own. Every second night it may eliminate one Red Team member. Wins by being the last player standing.',
   ),
 };
 

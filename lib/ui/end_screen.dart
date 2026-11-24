@@ -72,7 +72,7 @@ class EndScreen extends StatelessWidget {
                 ShaderMask(
                   blendMode: BlendMode.srcIn,
                   shaderCallback: (r) =>
-                      (blueish ? AppColors.blueGradient : AppColors.pinkGradient)
+                      (blueish ? AppColors.teamBlueGradient : AppColors.dangerGradient)
                           .createShader(r),
                   child: Text('$line1\n$line2',
                       style: AppText.ui(46, weight: FontWeight.w700, height: 1)),

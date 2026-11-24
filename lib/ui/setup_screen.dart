@@ -339,7 +339,7 @@ class _PlayerRow extends StatelessWidget {
                   role?.info.name ?? 'Pick role',
                   textAlign: TextAlign.right,
                   style: AppText.body(12.5,
-                      color: role == null ? AppColors.blueSoft : AppColors.textSoft),
+                      color: role == null ? AppColors.secondarySoft : AppColors.textSoft),
                 ),
               ),
             ),
