@@ -1,0 +1,607 @@
+/// The rules engine and narration state machine.
+///
+/// A game alternates night and day. The controller owns every piece of state
+/// (who is alive, VPN link, CISO, tools used, event effects) and exposes the
+/// current [GuideStep], which is all the UI needs to render.
+library;
+
+import 'dart:math';
+
+import 'package:flutter/foundation.dart';
+
+import 'events.dart';
+import 'guide_step.dart';
+import 'models.dart';
+
+part 'day_script.dart';
+part 'night_script.dart';
+
+enum GamePhase { night, day, end }
+
+/// Order matters: stages are visited in this order.
+enum DayStage { morning, election, event, debate, vote, verdict }
+
+class GameController extends ChangeNotifier {
+  GameController({
+    required List<Player> players,
+    required this.expert,
+    Random? random,
+  })  : players = List.unmodifiable(players),
+        rng = random ?? Random(),
+        inPlay = players.map((p) => p.role).toSet() {
+    _beginNight(first: true);
+  }
+
+  final List<Player> players;
+  final bool expert;
+  final Random rng;
+
+  /// Roles dealt at the start. The Narrator calls them all night long, even
+  /// when their holder is gone, so that silence never reveals who is out.
+  final Set<RoleId> inPlay;
+
+  GamePhase phase = GamePhase.night;
+  Winner? winner;
+  int night = 1;
+  int nightCursor = 0;
+  DayStage dayStage = DayStage.morning;
+
+  /// True while Dead Man's Switch / CISO successor steps are being resolved.
+  bool inChain = false;
+
+  // --- persistent game state -------------------------------------------------
+  List<int> link = [];
+  int? ciso;
+  bool restoreUsed = false;
+  bool killUsed = false;
+
+  // --- night inputs ------------------------------------------------------------
+  final Map<String, List<int>> _sel = {};
+  final Set<String> _none = {};
+  bool restore = false;
+  bool kill = false;
+  EventCard? nightEvent;
+  int? honeypotId;
+  bool phishReal = false;
+  List<int> phishTargets = [];
+  final Map<int, bool> phishClicked = {};
+
+  // --- day state ---------------------------------------------------------------
+  EventCard? todayEvent;
+  List<int> morningIds = [];
+  List<String> morningNotes = [];
+  List<int> verdictIds = [];
+  List<int> noticeIds = [];
+  Set<int> voteBanned = {};
+  bool electionToday = false;
+  bool skipDebate = false;
+  bool skipVote = false;
+  int debateSeconds = 300;
+  List<int> ddosOrder = [];
+  int ddosIndex = 0;
+
+  final List<int> pendingDms = [];
+  int? pendingCisoFrom;
+  bool _thenNight = false;
+  final List<EventCard> _deck = [];
+
+  // ---------------------------------------------------------------------------
+  // Queries
+  // ---------------------------------------------------------------------------
+
+  List<Player> get alivePlayers => players.where((p) => p.alive).toList();
+
+  Player? holder(RoleId r) {
+    for (final p in players) {
+      if (p.role == r) return p;
+    }
+    return null;
+  }
+
+  List<int> sel(String key) => _sel[key] ?? const [];
+  bool hasNone(String key) => _none.contains(key);
+
+  List<DownEntry> entries(Iterable<int> ids) => ids
+      .map((i) => players[i])
+      .map((p) => DownEntry(
+            name: p.name,
+            role: p.role.info.name,
+            team: p.team,
+          ))
+      .toList();
+
+  GuideStep get currentStep {
+    assert(phase != GamePhase.end, 'No step once the game is over');
+    return phase == GamePhase.night ? _buildNight(this) : _buildDay(this);
+  }
+
+  /// The machine the Red Team (or the attackers, one by one) aimed at tonight.
+  int? get rawTarget {
+    if (nightEvent == EventCard.c2ServerDown) {
+      final attackers = _attackersOf(this);
+      if (attackers.isEmpty) return null;
+      final counts = <int, int>{};
+      for (final a in attackers) {
+        final t = _sel['red:${a.id}']?.firstOrNull;
+        if (t == null) return null;
+        counts[t] = (counts[t] ?? 0) + 1;
+      }
+      // 4 attackers or more: a majority is enough. Otherwise: unanimity.
+      final needed =
+          attackers.length >= 4 ? attackers.length ~/ 2 + 1 : attackers.length;
+      for (final e in counts.entries) {
+        if (e.value >= needed) return e.key;
+      }
+      return null;
+    }
+    return _sel['red']?.firstOrNull;
+  }
+
+  bool get honeypotTriggered =>
+      nightEvent == EventCard.honeypot &&
+      rawTarget != null &&
+      rawTarget == honeypotId;
+
+  /// The machine that will really be compromised (before tools).
+  int? get effectiveVictim => honeypotTriggered ? null : rawTarget;
+
+  /// Win conditions, checked after every elimination.
+  Winner? checkWinner() {
+    final alive = alivePlayers;
+    if (alive.isEmpty) return Winner.outage;
+    if (link.length == 2 && alive.length == 2) {
+      final ids = alive.map((p) => p.id).toSet();
+      if (ids.containsAll(link) &&
+          players[link[0]].team != players[link[1]].team) {
+        return Winner.vpn;
+      }
+    }
+    final reds = alive.where((p) => p.team == Team.red).length;
+    final purples = alive.where((p) => p.team == Team.purple).length;
+    final blues = alive.length - reds - purples;
+    if (reds == 0 && purples == 0) return Winner.blue;
+    if (blues == 0 && purples == 0) return Winner.red;
+    if (blues == 0 && reds == 0) return Winner.purple;
+    return null;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Actions (called by the UI)
+  // ---------------------------------------------------------------------------
+
+  void pick(int id) {
+    if (phase == GamePhase.end) return;
+    final step = currentStep;
+    final key = step.selKey;
+    final picker = step.picker;
+    if (key == null || picker == null) return;
+    final tile = picker.tiles.firstWhere((t) => t.id == id);
+    if (tile.locked) return;
+
+    switch (step.kind) {
+      case StepKind.engineer:
+        if (link.contains(id)) {
+          link = link.where((x) => x != id).toList();
+        } else {
+          link = [...link, id];
+          if (link.length > 2) link = link.sublist(link.length - 2);
+        }
+      case StepKind.election:
+        ciso = id;
+      default:
+        final list = List<int>.of(_sel[key] ?? const []);
+        if (list.contains(id)) {
+          list.remove(id);
+        } else if (picker.max == 1) {
+          list
+            ..clear()
+            ..add(id);
+        } else {
+          list.add(id);
+          if (list.length > picker.max) list.removeAt(0);
+        }
+        _sel[key] = list;
+        _none.remove(key);
+    }
+    notifyListeners();
+  }
+
+  void pickNone() {
+    final key = currentStep.selKey;
+    if (key == null) return;
+    _sel.remove(key);
+    _none.add(key);
+    notifyListeners();
+  }
+
+  void toggleRestore() {
+    final tools = currentStep.tools;
+    if (tools == null || !tools.restoreEnabled) return;
+    restore = !restore;
+    notifyListeners();
+  }
+
+  void toggleKill() {
+    final tools = currentStep.tools;
+    if (tools == null || !tools.killEnabled) return;
+    kill = !kill;
+    if (!kill) _sel.remove('kill');
+    notifyListeners();
+  }
+
+  void answerPhish(int id, {required bool clicked}) {
+    phishClicked[id] = clicked;
+    notifyListeners();
+  }
+
+  void primary() {
+    switch (phase) {
+      case GamePhase.end:
+        return;
+      case GamePhase.night:
+        if (!currentStep.canContinue) return;
+        if (nightCursor < _nightPlan(this).length - 1) {
+          nightCursor++;
+        } else {
+          _resolveNight();
+        }
+      case GamePhase.day:
+        if (!currentStep.canContinue) return;
+        if (inChain) {
+          _confirmChain();
+        } else {
+          _dayPrimary();
+        }
+    }
+    notifyListeners();
+  }
+
+  void back() {
+    if (phase == GamePhase.night) {
+      if (nightCursor > 0) nightCursor--;
+    } else if (phase == GamePhase.day &&
+        !inChain &&
+        dayStage != DayStage.morning &&
+        dayStage != DayStage.verdict) {
+      final vis = _visibleStages();
+      final i = vis.indexOf(dayStage);
+      if (i > 0) dayStage = vis[i - 1];
+    }
+    notifyListeners();
+  }
+
+  /// The day whose Event card has already been revealed with its animation.
+  int eventRevealedNight = 0;
+
+  bool get eventRevealed => todayEvent != null && eventRevealedNight == night;
+
+  /// Called once the draw animation is over, so it does not replay when the
+  /// Narrator goes back to the Event step.
+  void markEventRevealed() {
+    if (eventRevealed) return;
+    eventRevealedNight = night;
+    notifyListeners();
+  }
+
+  @visibleForTesting
+  void debugSetTodayEvent(EventCard card) {
+    _applyEvent(card);
+    notifyListeners();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Night
+  // ---------------------------------------------------------------------------
+
+  void _beginNight({bool first = false}) {
+    if (!first) night++;
+    phase = GamePhase.night;
+    nightCursor = 0;
+    _sel.clear();
+    _none.clear();
+    restore = false;
+    kill = false;
+    voteBanned = {};
+    inChain = false;
+
+    nightEvent = todayEvent;
+    todayEvent = null;
+    honeypotId = null;
+    phishTargets = [];
+    phishClicked.clear();
+    if (nightEvent == EventCard.honeypot) {
+      final candidates = alivePlayers.where((p) => p.team == Team.blue);
+      if (candidates.isNotEmpty) {
+        honeypotId = candidates.elementAt(rng.nextInt(candidates.length)).id;
+      }
+    }
+    if (nightEvent == EventCard.phishing) {
+      phishReal = rng.nextBool();
+      final pool = alivePlayers..shuffle(rng);
+      phishTargets = pool.take(3).map((p) => p.id).toList();
+    }
+  }
+
+  void _resolveNight() {
+    final ev = nightEvent;
+    final outage = ev == EventCard.powerOutage;
+    final deaths = <int>[];
+    final notes = <String>[];
+
+    // The Incident Responder's tools only count when they could really be used.
+    final ir = holder(RoleId.incidentResponder);
+    final irActive = ir != null && ir.alive && !outage;
+    final useRestore = restore &&
+        irActive &&
+        !restoreUsed &&
+        rawTarget != null &&
+        ev != EventCard.zeroDay;
+    final useKill = kill && irActive && !killUsed;
+
+    final victim = effectiveVictim;
+    if (useRestore) restoreUsed = true;
+    if (victim != null && !useRestore) deaths.add(victim);
+    if (honeypotTriggered) {
+      notes.add('Honeypot triggered: an attack was detected and blocked.');
+    }
+
+    if (useKill) {
+      killUsed = true;
+      final t = _sel['kill']?.firstOrNull;
+      if (t != null) deaths.add(t);
+    }
+
+    if (!outage && night.isEven) {
+      final t = _sel['purple']?.firstOrNull;
+      if (t != null) deaths.add(t);
+    }
+
+    var banned = <int>{};
+    if (ev == EventCard.phishing) {
+      final clickers =
+          phishTargets.where((id) => phishClicked[id] == true).toList();
+      final reporters =
+          phishTargets.where((id) => phishClicked[id] == false).toList();
+      if (phishReal) {
+        if (reporters.isNotEmpty) {
+          notes.add('Phishing reported and blocked.');
+        } else if (clickers.isNotEmpty) {
+          deaths.addAll(clickers);
+          notes.add('Phishing campaign: every machine that clicked is compromised.');
+        }
+      } else if (reporters.isNotEmpty) {
+        banned = reporters.toSet();
+        final names = _join(reporters.map((i) => players[i].name).toList());
+        notes.add(
+            'False alarm: the email was legitimate. $names reported it by mistake and cannot vote today.');
+      }
+    }
+
+    morningIds = _eliminate(deaths);
+    morningNotes = notes;
+    voteBanned = banned;
+
+    // New day.
+    phase = GamePhase.day;
+    dayStage = DayStage.morning;
+    inChain = false;
+    noticeIds = [];
+    verdictIds = [];
+    electionToday = false;
+    skipDebate = false;
+    skipVote = false;
+    debateSeconds = 300;
+    ddosOrder = [];
+    ddosIndex = 0;
+    todayEvent = null;
+    nightEvent = null;
+    _sel.clear();
+    _none.clear();
+    restore = false;
+    kill = false;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Eliminations and chain reactions
+  // ---------------------------------------------------------------------------
+
+  /// Takes machines down, applying VPN links and queuing Dead Man's Switch and
+  /// CISO succession. Returns every machine that actually went down.
+  List<int> _eliminate(Iterable<int> ids) {
+    final out = <int>[];
+    void down(int id) {
+      final p = players[id];
+      if (!p.alive) return;
+      p.alive = false;
+      out.add(id);
+      if (p.role == RoleId.deadMansSwitch) pendingDms.add(id);
+      if (ciso == id) {
+        ciso = null;
+        pendingCisoFrom = id;
+      }
+      if (link.length == 2 && link.contains(id)) {
+        down(link.firstWhere((x) => x != id));
+      }
+    }
+
+    for (final id in ids) {
+      down(id);
+    }
+    return out;
+  }
+
+  void _beginChain({required bool thenNight}) {
+    _thenNight = thenNight;
+    inChain = true;
+    noticeIds = [];
+    _normalizeChain();
+    if (!_chainPending) _finishChain();
+  }
+
+  bool get _chainPending => pendingDms.isNotEmpty || pendingCisoFrom != null;
+
+  void _normalizeChain() {
+    if (alivePlayers.isEmpty) {
+      pendingDms.clear();
+      pendingCisoFrom = null;
+      return;
+    }
+    // No need to name a successor once the game is decided.
+    if (pendingDms.isEmpty && pendingCisoFrom != null && checkWinner() != null) {
+      pendingCisoFrom = null;
+    }
+  }
+
+  void _confirmChain() {
+    if (pendingDms.isNotEmpty) {
+      pendingDms.removeAt(0);
+      final target = _sel['dms']?.firstOrNull;
+      _sel.remove('dms');
+      _none.remove('dms');
+      noticeIds = target == null ? [] : _eliminate([target]);
+    } else if (pendingCisoFrom != null) {
+      ciso = _sel['succession']?.firstOrNull;
+      _sel.remove('succession');
+      pendingCisoFrom = null;
+      noticeIds = [];
+    }
+    _normalizeChain();
+    if (!_chainPending) _finishChain();
+  }
+
+  void _finishChain() {
+    inChain = false;
+    final w = checkWinner();
+    if (w != null) {
+      phase = GamePhase.end;
+      winner = w;
+      return;
+    }
+    if (_thenNight) {
+      _beginNight();
+    } else {
+      final vis = _visibleStages();
+      dayStage = vis.length > 1 ? vis[1] : vis.first;
+      _enterStage();
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Day flow
+  // ---------------------------------------------------------------------------
+
+  List<DayStage> _visibleStages() => [
+        DayStage.morning,
+        if (electionToday || ciso == null) DayStage.election,
+        if (expert && night >= 2) DayStage.event,
+        if (!skipDebate) DayStage.debate,
+        DayStage.vote,
+      ];
+
+  void _dayPrimary() {
+    switch (dayStage) {
+      case DayStage.morning:
+        _beginChain(thenNight: false);
+      case DayStage.election:
+      case DayStage.event:
+        _goNextStage();
+      case DayStage.debate:
+        if (todayEvent == EventCard.ddos && ddosIndex < ddosOrder.length - 1) {
+          ddosIndex++;
+        } else {
+          _goNextStage();
+        }
+      case DayStage.vote:
+        if (skipVote) {
+          verdictIds = [];
+          _beginChain(thenNight: true);
+        } else {
+          final pick = _sel['vote']?.firstOrNull;
+          verdictIds = pick == null ? [] : _eliminate([pick]);
+          _sel.remove('vote');
+          _none.remove('vote');
+          dayStage = DayStage.verdict;
+        }
+      case DayStage.verdict:
+        _beginChain(thenNight: true);
+    }
+  }
+
+  void _goNextStage() {
+    final vis = _visibleStages();
+    final i = vis.indexOf(dayStage);
+    dayStage = vis[min(i + 1, vis.length - 1)];
+    _enterStage();
+  }
+
+  void _enterStage() {
+    switch (dayStage) {
+      case DayStage.election:
+        electionToday = true;
+      case DayStage.event:
+        if (todayEvent == null) _drawEvent();
+      case DayStage.debate:
+        if (todayEvent == EventCard.ddos && ddosOrder.isEmpty) _buildDdosOrder();
+      default:
+        break;
+    }
+  }
+
+  void _drawEvent() {
+    if (_deck.isEmpty) {
+      _deck
+        ..addAll(EventCard.values)
+        ..shuffle(rng);
+    }
+    _applyEvent(_deck.removeLast());
+  }
+
+  void _applyEvent(EventCard card) {
+    todayEvent = card;
+    switch (card) {
+      case EventCard.blackFridayRush:
+        debateSeconds = 60;
+      case EventCard.remoteWorkDay:
+        skipDebate = true;
+      case EventCard.maintenanceWindow:
+        skipVote = true;
+      case EventCard.ddos:
+        _buildDdosOrder();
+      default:
+        break;
+    }
+  }
+
+  /// Everyone alive speaks once, starting with the player to the left of the
+  /// CISO. Players are entered in clockwise seating order, so "left" is the
+  /// next seat.
+  void _buildDdosOrder() {
+    final start = ciso ?? -1;
+    final alive = alivePlayers.map((p) => p.id).toList();
+    ddosOrder = [
+      ...alive.where((i) => i > start),
+      ...alive.where((i) => i <= start),
+    ];
+    ddosIndex = 0;
+  }
+
+  String _join(List<String> names) {
+    if (names.length <= 1) return names.join();
+    return '${names.sublist(0, names.length - 1).join(', ')} and ${names.last}';
+  }
+
+  List<TileSpec> _tiles({
+    required Set<int> selected,
+    bool Function(Player p)? lock,
+  }) =>
+      players
+          .map((p) => TileSpec(
+                id: p.id,
+                name: p.name,
+                team: p.team,
+                selected: selected.contains(p.id),
+                locked: !p.alive || (lock?.call(p) ?? false),
+                dead: !p.alive,
+              ))
+          .toList();
+}

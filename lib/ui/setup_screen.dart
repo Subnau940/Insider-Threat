@@ -1,0 +1,348 @@
+import 'package:flutter/material.dart';
+
+import '../game/compositions.dart';
+import '../game/models.dart';
+import '../game/setup_controller.dart';
+import '../theme/app_theme.dart';
+import 'scan_screen.dart';
+import 'widgets.dart';
+
+class SetupScreen extends StatefulWidget {
+  const SetupScreen({
+    super.key,
+    required this.setup,
+    required this.onBack,
+    required this.onStart,
+  });
+
+  final SetupController setup;
+  final VoidCallback onBack;
+  final VoidCallback onStart;
+
+  @override
+  State<SetupScreen> createState() => _SetupScreenState();
+}
+
+class _SetupScreenState extends State<SetupScreen> {
+  late final List<TextEditingController> _names = [
+    for (var i = 0; i < maxPlayers; i++)
+      TextEditingController(text: widget.setup.names[i]),
+  ];
+
+  @override
+  void dispose() {
+    for (final c in _names) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  void _openScan([int? player]) {
+    FocusScope.of(context).unfocus();
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => ScanScreen(setup: widget.setup, startAt: player),
+    ));
+  }
+
+  Future<void> _pickRole(int player) async {
+    final s = widget.setup;
+    final counts = s.assignedCounts;
+    final target = s.recommended.counts;
+    final choice = await showModalBottomSheet<RoleId>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(12, 20, 12, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
+                child: Lbl('Role card of player ${player + 1}'),
+              ),
+              for (final r in roleDisplayOrder)
+                ListTile(
+                  enabled: !s.isRoleTaken(r, exceptPlayer: player),
+                  selected: s.roles[player] == r,
+                  selectedTileColor: AppColors.surface,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  leading: TeamDot(r.info.team),
+                  minLeadingWidth: 12,
+                  title: Text(r.info.name,
+                      style: AppText.ui(16, weight: FontWeight.w600)),
+                  subtitle: Text(r.info.character, style: AppText.mono(11)),
+                  trailing: Text(
+                    '${counts[r] ?? 0}/${target[r] ?? 0}',
+                    style: AppText.mono(12),
+                  ),
+                  onTap: () => Navigator.pop(ctx, r),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (choice != null) s.setRole(player, choice);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return NeonBackground(
+      mood: Mood.night,
+      child: ListenableBuilder(
+        listenable: widget.setup,
+        builder: (context, _) {
+          final s = widget.setup;
+          final rec = s.recommended;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 4, 20, 0),
+                child: Row(
+                  children: [
+                    TextButton(
+                      onPressed: widget.onBack,
+                      child: Text('‹ Back',
+                          style: AppText.ui(15, color: AppColors.muted)),
+                    ),
+                    const Spacer(),
+                    const TagChip('Setup'),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                  children: [
+                    Text('Set the table',
+                        style: AppText.ui(32, weight: FontWeight.w700, height: 1.05)),
+                    const SizedBox(height: 14),
+                    _CountRow(
+                      count: s.count,
+                      onMinus: s.count > minPlayers
+                          ? () => s.setCount(s.count - 1)
+                          : null,
+                      onPlus: s.count < maxPlayers
+                          ? () => s.setCount(s.count + 1)
+                          : null,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Recommended: ${rec.red} Red${rec.purple > 0 ? ' · ${rec.purple} Purple' : ''} · ${rec.special.length} special · ${rec.defenders} Defenders',
+                      style: AppText.mono(12, height: 1.5),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text('Expert mode (Event cards)',
+                              style: AppText.ui(15, weight: FontWeight.w600)),
+                        ),
+                        Switch(
+                          value: s.expert,
+                          onChanged: s.setExpert,
+                          thumbColor:
+                              const WidgetStatePropertyAll(AppColors.text),
+                          trackColor: WidgetStateProperty.resolveWith(
+                            (st) => st.contains(WidgetState.selected)
+                                ? AppColors.violet
+                                : AppColors.line,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    NeonButton(
+                      label: 'Scan the cards',
+                      height: 50,
+                      fontSize: 14,
+                      onPressed: () => _openScan(),
+                    ),
+                    const SizedBox(height: 8),
+                    NeonButton(
+                      label: 'Deal at random',
+                      variant: NeonVariant.ghost,
+                      height: 46,
+                      fontSize: 13,
+                      onPressed: s.fillRandom,
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        const Expanded(child: Lbl('Clockwise seating order')),
+                        Text('${s.countTeam(Team.red)}',
+                            style: AppText.ui(14, weight: FontWeight.w600)),
+                        const SizedBox(width: 5),
+                        const TeamDot(Team.red),
+                        const SizedBox(width: 12),
+                        Text('${s.countTeam(Team.blue)}',
+                            style: AppText.ui(14, weight: FontWeight.w600)),
+                        const SizedBox(width: 5),
+                        const TeamDot(Team.blue),
+                        const SizedBox(width: 12),
+                        Text('${s.countTeam(Team.purple)}',
+                            style: AppText.ui(14, weight: FontWeight.w600)),
+                        const SizedBox(width: 5),
+                        const TeamDot(Team.purple),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    for (var i = 0; i < s.count; i++)
+                      _PlayerRow(
+                        key: ValueKey(i),
+                        index: i,
+                        controller: _names[i],
+                        role: s.roles[i],
+                        scanned: s.cards[i] != null,
+                        onName: (v) => s.setName(i, v),
+                        onRole: () => _pickRole(i),
+                        onScan: () => _openScan(i),
+                      ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+                child: NeonButton(
+                  label: s.blocker ?? 'Start the game',
+                  onPressed: s.canStart ? widget.onStart : null,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _CountRow extends StatelessWidget {
+  const _CountRow({
+    required this.count,
+    required this.onMinus,
+    required this.onPlus,
+  });
+
+  final int count;
+  final VoidCallback? onMinus;
+  final VoidCallback? onPlus;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.line),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text('Players', style: AppText.ui(16, weight: FontWeight.w600)),
+            ),
+            IconButton(
+              tooltip: 'Remove a player',
+              onPressed: onMinus,
+              icon: const Icon(Icons.remove),
+            ),
+            SizedBox(
+              width: 40,
+              child: Text('$count',
+                  textAlign: TextAlign.center,
+                  style: AppText.mono(22,
+                      weight: FontWeight.w700, color: AppColors.text)),
+            ),
+            IconButton(
+              tooltip: 'Add a player',
+              onPressed: onPlus,
+              icon: const Icon(Icons.add),
+            ),
+          ],
+        ),
+      );
+}
+
+class _PlayerRow extends StatelessWidget {
+  const _PlayerRow({
+    super.key,
+    required this.index,
+    required this.controller,
+    required this.role,
+    required this.scanned,
+    required this.onName,
+    required this.onRole,
+    required this.onScan,
+  });
+
+  final int index;
+  final TextEditingController controller;
+  final RoleId? role;
+  final bool scanned;
+  final ValueChanged<String> onName;
+  final VoidCallback onRole;
+  final VoidCallback onScan;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        margin: const EdgeInsets.only(bottom: 6),
+        constraints: const BoxConstraints(minHeight: 52),
+        padding: const EdgeInsets.only(left: 14, right: 4),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.line),
+        ),
+        child: Row(
+          children: [
+            if (role != null)
+              TeamDot(role!.info.team)
+            else
+              const SizedBox(width: 10),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextField(
+                controller: controller,
+                onChanged: onName,
+                textCapitalization: TextCapitalization.words,
+                textInputAction: TextInputAction.next,
+                style: AppText.ui(18, weight: FontWeight.w600),
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  isDense: true,
+                  hintText: 'Player ${index + 1}',
+                  hintStyle: AppText.ui(18, color: AppColors.disabledText),
+                ),
+              ),
+            ),
+            IconButton(
+              tooltip: scanned
+                  ? 'Card scanned. Scan again for player ${index + 1}'
+                  : 'Scan the card of player ${index + 1}',
+              onPressed: onScan,
+              icon: Icon(
+                Icons.qr_code_scanner,
+                size: 20,
+                color: scanned ? AppColors.violet : AppColors.muted,
+              ),
+            ),
+            TextButton(
+              onPressed: onRole,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 130),
+                child: Text(
+                  role?.info.name ?? 'Pick role',
+                  textAlign: TextAlign.right,
+                  style: AppText.ui(12.5,
+                      color: role == null ? AppColors.blueSoft : AppColors.textSoft),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+}

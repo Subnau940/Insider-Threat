@@ -1,0 +1,819 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+
+import '../game/guide_step.dart';
+import '../game/models.dart';
+import '../theme/app_theme.dart';
+
+enum Mood { night, day, endBlue, endRed }
+
+/// Full-screen background with the prototype's soft glows.
+class NeonBackground extends StatelessWidget {
+  const NeonBackground({super.key, required this.mood, required this.child});
+
+  final Mood mood;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final glow = switch (mood) {
+      Mood.night => AppColors.blue.withValues(alpha: .24),
+      Mood.day => AppColors.violet.withValues(alpha: .30),
+      Mood.endBlue => AppColors.blue.withValues(alpha: .34),
+      Mood.endRed => AppColors.red.withValues(alpha: .32),
+    };
+    return Scaffold(
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          color: AppColors.bg,
+          gradient: RadialGradient(
+            center: Alignment(1, 1.05),
+            radius: .9,
+            colors: [Color(0x1FFF4D6A), Color(0x00FF4D6A)],
+          ),
+        ),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 400),
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              center: const Alignment(0, -1.15),
+              radius: 1.0,
+              colors: [glow, glow.withValues(alpha: 0)],
+            ),
+          ),
+          child: SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: child,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class Lbl extends StatelessWidget {
+  const Lbl(this.text, {super.key, this.color = AppColors.muted, this.align});
+
+  final String text;
+  final Color color;
+  final TextAlign? align;
+
+  @override
+  Widget build(BuildContext context) => Text(
+        text.toUpperCase(),
+        textAlign: align,
+        style: AppText.mono(11, color: color, height: 1.3, spacing: 1.5),
+      );
+}
+
+class TagChip extends StatelessWidget {
+  const TagChip(this.text, {super.key, this.danger = false});
+
+  final String text;
+  final bool danger;
+
+  @override
+  Widget build(BuildContext context) {
+    final base = danger ? AppColors.red : AppColors.blue;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+      decoration: BoxDecoration(
+        color: base.withValues(alpha: .14),
+        borderRadius: BorderRadius.circular(13),
+      ),
+      child: Text(
+        text.toUpperCase(),
+        style: AppText.mono(
+          danger ? 10 : 11,
+          color: danger ? AppColors.redSoft : const Color(0xFFB9CCFF),
+          spacing: 1.1,
+        ),
+      ),
+    );
+  }
+}
+
+class TeamDot extends StatelessWidget {
+  const TeamDot(this.team, {super.key});
+
+  final Team team;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.team(team);
+    return Semantics(
+      label: team.label,
+      child: Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(
+          color: c,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(color: c.withValues(alpha: .7), blurRadius: 8),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+enum NeonVariant { primary, red, ghost }
+
+class NeonButton extends StatelessWidget {
+  const NeonButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.variant = NeonVariant.primary,
+    this.height = 56,
+    this.fontSize = 16,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final NeonVariant variant;
+  final double height;
+  final double fontSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onPressed != null;
+    final Gradient? gradient = !enabled
+        ? null
+        : switch (variant) {
+            NeonVariant.primary => AppColors.primaryGradient,
+            NeonVariant.red => AppColors.redGradient,
+            NeonVariant.ghost => null,
+          };
+    final bg = !enabled
+        ? AppColors.disabledBg
+        : variant == NeonVariant.ghost
+            ? AppColors.surface
+            : null;
+    final fg = !enabled
+        ? AppColors.disabledText
+        : variant == NeonVariant.ghost
+            ? AppColors.text
+            : AppColors.onAccent;
+    final radius = BorderRadius.circular(16);
+    return Material(
+      color: Colors.transparent,
+      child: Ink(
+        height: height,
+        decoration: BoxDecoration(
+          color: bg,
+          gradient: gradient,
+          borderRadius: radius,
+          border: variant == NeonVariant.ghost && enabled
+              ? Border.all(color: AppColors.line)
+              : null,
+        ),
+        child: InkWell(
+          borderRadius: radius,
+          onTap: onPressed,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                label.toUpperCase(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.ui(
+                  fontSize,
+                  weight: FontWeight.w700,
+                  color: fg,
+                  spacing: .9,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class SegBar extends StatelessWidget {
+  const SegBar({super.key, required this.current, required this.total});
+
+  final int current;
+  final int total;
+
+  @override
+  Widget build(BuildContext context) => ExcludeSemantics(
+        child: Row(
+          children: [
+            for (var i = 0; i < total; i++) ...[
+              if (i > 0) const SizedBox(width: 6),
+              Expanded(
+                child: Container(
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: i < current ? null : AppColors.line,
+                    gradient: i < current ? AppColors.primaryGradient : null,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+}
+
+/// The line the Narrator reads, typed out. Its height is reserved up front so
+/// the page does not jump while typing.
+class SayCard extends StatefulWidget {
+  const SayCard({super.key, required this.text});
+
+  final String text;
+
+  @override
+  State<SayCard> createState() => _SayCardState();
+}
+
+class _SayCardState extends State<SayCard> {
+  Timer? _timer;
+  int _typed = 0;
+  bool _started = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_started) {
+      _started = true;
+      _start();
+    }
+  }
+
+  @override
+  void didUpdateWidget(SayCard old) {
+    super.didUpdateWidget(old);
+    if (old.text != widget.text) _start();
+  }
+
+  void _start() {
+    _timer?.cancel();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _typed = widget.text.length;
+      return;
+    }
+    _typed = 0;
+    _timer = Timer.periodic(const Duration(milliseconds: 22), (t) {
+      if (_typed >= widget.text.length) {
+        t.cancel();
+        return;
+      }
+      setState(() => _typed++);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final style = AppText.ui(20, height: 1.4);
+    final shown = widget.text.substring(0, _typed.clamp(0, widget.text.length));
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF171C48), Color(0xFF10143A)],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.blue.withValues(alpha: .4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Lbl('Say', color: AppColors.blueSoft),
+          const SizedBox(height: 10),
+          Semantics(
+            label: widget.text,
+            child: ExcludeSemantics(
+              child: Stack(
+                children: [
+                  Visibility(
+                    visible: false,
+                    maintainSize: true,
+                    maintainAnimation: true,
+                    maintainState: true,
+                    child: Text(widget.text, style: style),
+                  ),
+                  Text(shown, style: style),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class PickerGrid extends StatelessWidget {
+  const PickerGrid({
+    super.key,
+    required this.spec,
+    required this.onPick,
+    required this.onNone,
+  });
+
+  final PickerSpec spec;
+  final ValueChanged<int> onPick;
+  final VoidCallback onNone;
+
+  Color get _accent => switch (spec.style) {
+        PickStyle.blue => AppColors.blue,
+        PickStyle.red => AppColors.red,
+        PickStyle.violet => AppColors.violet,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Lbl(spec.label),
+        const SizedBox(height: 10),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            mainAxisExtent: 48,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+          ),
+          itemCount: spec.tiles.length,
+          itemBuilder: (_, i) {
+            final t = spec.tiles[i];
+            return _Tile(
+              selected: t.selected,
+              accent: _accent,
+              onTap: t.locked ? null : () => onPick(t.id),
+              child: Row(
+                children: [
+                  TeamDot(t.team),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      t.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.ui(
+                        15,
+                        weight: FontWeight.w600,
+                        decoration: t.dead ? TextDecoration.lineThrough : null,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        if (spec.noneLabel != null) ...[
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 48,
+            child: _Tile(
+              selected: spec.noneSelected,
+              accent: _accent,
+              onTap: onNone,
+              child: Center(
+                child: Text(
+                  spec.noneLabel!,
+                  style: AppText.ui(15, weight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _Tile extends StatelessWidget {
+  const _Tile({
+    required this.selected,
+    required this.accent,
+    required this.onTap,
+    required this.child,
+    this.padding = const EdgeInsets.symmetric(horizontal: 12),
+  });
+
+  final bool selected;
+  final Color accent;
+  final VoidCallback? onTap;
+  final Widget child;
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(12);
+    return Semantics(
+      button: true,
+      selected: selected,
+      enabled: onTap != null,
+      child: Opacity(
+        opacity: onTap == null ? .4 : 1,
+        child: Material(
+          color: Colors.transparent,
+          child: Ink(
+            decoration: BoxDecoration(
+              color: selected
+                  ? accent.withValues(alpha: .18)
+                  : AppColors.surface,
+              borderRadius: radius,
+              border: Border.all(color: selected ? accent : AppColors.line),
+              boxShadow: selected
+                  ? [
+                      BoxShadow(
+                        color: accent.withValues(alpha: .28),
+                        blurRadius: 16,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: InkWell(
+              borderRadius: radius,
+              onTap: onTap,
+              child: Padding(padding: padding, child: child),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ToolsRow extends StatelessWidget {
+  const ToolsRow({
+    super.key,
+    required this.spec,
+    required this.onRestore,
+    required this.onKill,
+  });
+
+  final ToolsSpec spec;
+  final VoidCallback onRestore;
+  final VoidCallback onKill;
+
+  Widget _tool(String title, String sub, bool on, bool enabled, Color accent,
+          VoidCallback cb) =>
+      Expanded(
+        child: SizedBox(
+          height: 66,
+          child: _Tile(
+            selected: on,
+            accent: accent,
+            onTap: enabled ? cb : null,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.ui(14, weight: FontWeight.w700),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  sub,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.ui(12,
+                      weight: FontWeight.w400, color: AppColors.muted),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) => Row(
+        children: [
+          _tool('Backup restore', spec.restoreSub, spec.restoreOn,
+              spec.restoreEnabled, AppColors.blue, onRestore),
+          const SizedBox(width: 8),
+          _tool('Kill process', spec.killSub, spec.killOn, spec.killEnabled,
+              AppColors.red, onKill),
+        ],
+      );
+}
+
+class CountdownClock extends StatefulWidget {
+  const CountdownClock({super.key, required this.spec});
+
+  final ClockSpec spec;
+
+  @override
+  State<CountdownClock> createState() => _CountdownClockState();
+}
+
+class _CountdownClockState extends State<CountdownClock> {
+  late int _left = widget.spec.seconds;
+  late int _max = widget.spec.seconds;
+  bool _running = true;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (_running && _left > 0) setState(() => _left--);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  String get _text =>
+      '${(_left ~/ 60).toString().padLeft(2, '0')}:${(_left % 60).toString().padLeft(2, '0')}';
+
+  @override
+  Widget build(BuildContext context) {
+    final over = _left == 0;
+    return Semantics(
+      label: '${widget.spec.label}: $_text',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Lbl(widget.spec.label),
+          const SizedBox(height: 6),
+          Text(
+            _text,
+            style: AppText.mono(
+              widget.spec.controls ? 60 : 44,
+              weight: FontWeight.w700,
+              color: over ? AppColors.red : AppColors.text,
+              height: 1,
+            ).copyWith(
+              fontFeatures: const [FontFeature.tabularFigures()],
+              shadows: [
+                Shadow(
+                  color: AppColors.violet.withValues(alpha: .55),
+                  blurRadius: 28,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: LinearProgressIndicator(
+              value: _max == 0 ? 0 : _left / _max,
+              minHeight: 6,
+              backgroundColor: AppColors.line,
+              color: over ? AppColors.red : AppColors.violet,
+            ),
+          ),
+          if (widget.spec.controls) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: NeonButton(
+                    label: _running ? 'Pause' : 'Resume',
+                    variant: NeonVariant.ghost,
+                    height: 46,
+                    fontSize: 13,
+                    onPressed: () => setState(() => _running = !_running),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: NeonButton(
+                    label: '+ 1 min',
+                    variant: NeonVariant.ghost,
+                    height: 46,
+                    fontSize: 13,
+                    onPressed: () => setState(() {
+                      _left += 60;
+                      if (_left > _max) _max = _left;
+                    }),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Machines that went offline, with their role revealed.
+class DownList extends StatelessWidget {
+  const DownList({super.key, required this.entries, this.compact = false});
+
+  final List<DownEntry> entries;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final nameStyle =
+        AppText.ui(compact ? 18 : 28, weight: FontWeight.w700, height: 1);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.red.withValues(alpha: .08),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.red.withValues(alpha: .45)),
+      ),
+      child: entries.isEmpty
+          ? Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Quiet night', style: AppText.ui(22, weight: FontWeight.w700)),
+                Flexible(
+                  child: Text(
+                    'No machine offline',
+                    textAlign: TextAlign.right,
+                    style: AppText.ui(13, color: AppColors.textSoft),
+                  ),
+                ),
+              ],
+            )
+          : Column(
+              children: [
+                for (var i = 0; i < entries.length; i++)
+                  Padding(
+                    padding: EdgeInsets.only(top: i == 0 ? 0 : 14),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            entries[i].name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: nameStyle,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        TeamDot(entries[i].team),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          flex: 2,
+                          child: Text(entries[i].role, style: AppText.ui(13)),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+    );
+  }
+}
+
+class ResultRow extends StatelessWidget {
+  const ResultRow({super.key, required this.line});
+
+  final ResultLine line;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.line),
+        ),
+        child: Row(
+          children: [
+            TeamDot(line.team),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                line.text,
+                style: AppText.ui(14, weight: FontWeight.w600, height: 1.35),
+              ),
+            ),
+          ],
+        ),
+      );
+}
+
+/// Narrator-only information, never read out loud.
+class SecretCard extends StatelessWidget {
+  const SecretCard({super.key, required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.violet.withValues(alpha: .12),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.violet.withValues(alpha: .5)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Lbl('Narrator only', color: Color(0xFFC7B5FF)),
+            const SizedBox(height: 6),
+            Text(text, style: AppText.ui(14, height: 1.4)),
+          ],
+        ),
+      );
+}
+
+class BannerCard extends StatelessWidget {
+  const BannerCard({super.key, required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.red.withValues(alpha: .10),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.red.withValues(alpha: .4)),
+        ),
+        child: Text(
+          text,
+          style: AppText.ui(14, weight: FontWeight.w600, color: AppColors.redSoft),
+        ),
+      );
+}
+
+class PhishAnswers extends StatelessWidget {
+  const PhishAnswers({super.key, required this.rows, required this.onAnswer});
+
+  final List<PhishRow> rows;
+  final void Function(int id, bool clicked) onAnswer;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        children: [
+          for (final r in rows)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      r.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.ui(16, weight: FontWeight.w600),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 92,
+                    height: 44,
+                    child: _Tile(
+                      selected: r.clicked == true,
+                      accent: AppColors.red,
+                      onTap: () => onAnswer(r.id, true),
+                      child: Center(
+                        child: Text('Click', style: AppText.ui(14)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 92,
+                    height: 44,
+                    child: _Tile(
+                      selected: r.clicked == false,
+                      accent: AppColors.blue,
+                      onTap: () => onAnswer(r.id, false),
+                      child: Center(
+                        child: Text('Report', style: AppText.ui(14)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      );
+}
