@@ -144,7 +144,7 @@ class _StepBody extends StatelessWidget {
             TextSpan(
               text: 'Do  ',
               style: AppText.body(14,
-                  weight: FontWeight.w700, color: AppColors.blueSoft),
+                  weight: FontWeight.w700, color: AppColors.secondarySoft),
             ),
             TextSpan(text: step.todo),
           ],

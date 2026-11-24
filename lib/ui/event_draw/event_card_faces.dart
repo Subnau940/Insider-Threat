@@ -17,8 +17,8 @@ const kCardRatio = 63 / 88;
 
 extension EventSideStyle on EventSide {
   Color get color => switch (this) {
-        EventSide.blue => AppColors.blue,
-        EventSide.red => AppColors.pink,
+        EventSide.blue => AppColors.teamBlue,
+        EventSide.red => AppColors.teamRed,
         EventSide.chaos => kCardLime,
       };
 

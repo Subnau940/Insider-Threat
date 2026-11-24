@@ -3,8 +3,9 @@
 /// starts here.
 ///
 /// Roles: [primary] (lime) is the brand accent and the call to action, kept
-/// for what is actionable or selected so it does not dominate. [blue] is
-/// narration and the Defenders, [pink] is danger and the Red Team.
+/// for what is actionable or selected so it does not dominate. [secondary]
+/// (pink) is the second accent. [danger] (red) is for warnings and errors. Team
+/// colours ([teamRed], [teamBlue]) identify the sides only.
 library;
 
 import 'package:flutter/material.dart';
@@ -30,13 +31,19 @@ abstract final class AppColors {
   static const primarySoft = Lime.c200;
   static const onAccent = Cod.c950;
 
-  // Narration, info, Defenders.
-  static const blue = Picton.c400;
-  static const blueSoft = Picton.c300;
+  // Secondary: second accent after the brand lime (badges, narration card,
+  // labels, scanner chrome).
+  static const secondary = Blush.c400;
+  static const secondarySoft = Blush.c200;
 
-  // Danger, Red Team.
-  static const pink = Blush.c400;
-  static const pinkSoft = Blush.c200;
+  // Danger: warnings, destructive actions, errors. Red, so it stays distinct
+  // from the pink secondary.
+  static const danger = Signal.c400;
+  static const dangerSoft = Signal.c200;
+
+  // Team colours: data, not UI chrome. Keep them for team identity only.
+  static const teamRed = Signal.c400;
+  static const teamBlue = Picton.c400;
 
   /// Faint grid lines on the Event card.
   static const grid = Color(0x17A5A5A1);
@@ -46,12 +53,12 @@ abstract final class AppColors {
     end: Alignment.bottomRight,
     colors: [Lime.c400, Lime.c500],
   );
-  static const pinkGradient = LinearGradient(
+  static const dangerGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Blush.c400, Blush.c500],
+    colors: [Signal.c400, Signal.c500],
   );
-  static const blueGradient = LinearGradient(
+  static const teamBlueGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [Picton.c300, Picton.c400],
@@ -59,8 +66,8 @@ abstract final class AppColors {
 
   /// Purple has no ramp of its own: the lone wildcard takes the brand lime.
   static Color team(Team t) => switch (t) {
-        Team.red => pink,
-        Team.blue => blue,
+        Team.red => teamRed,
+        Team.blue => teamBlue,
         Team.purple => primary,
       };
 }
@@ -138,11 +145,11 @@ ThemeData buildAppTheme() => ThemeData(
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primary,
         onPrimary: AppColors.onAccent,
-        secondary: AppColors.blue,
+        secondary: AppColors.secondary,
         onSecondary: AppColors.onAccent,
-        tertiary: AppColors.pink,
+        tertiary: AppColors.teamBlue,
         onTertiary: AppColors.onAccent,
-        error: AppColors.pink,
+        error: AppColors.danger,
         onError: AppColors.onAccent,
         surface: AppColors.surface,
         onSurface: AppColors.text,

@@ -41,7 +41,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             SizedBox(height: compact ? 16 : 24),
-            const TagChip('Narrator companion', pink: true),
+            const TagChip('Narrator companion'),
             const Spacer(),
             NeonButton(label: 'New game', onPressed: onNewGame),
             const SizedBox(height: 12),
