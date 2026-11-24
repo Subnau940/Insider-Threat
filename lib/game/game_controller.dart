@@ -19,7 +19,20 @@ part 'night_script.dart';
 enum GamePhase { night, day, end }
 
 /// Order matters: stages are visited in this order.
-enum DayStage { morning, election, event, debate, vote, verdict }
+enum DayStage {
+  morning,
+  election,
+  event,
+  quiz,
+  quizAnswer,
+  eventResult,
+  debate,
+  vote,
+  verdict,
+}
+
+/// What the quiz decided for today's Event.
+enum EventOutcome { pending, happens, blocked }
 
 class GameController extends ChangeNotifier {
   GameController({
@@ -67,7 +80,19 @@ class GameController extends ChangeNotifier {
   final Map<int, bool> phishClicked = {};
 
   // --- day state ---------------------------------------------------------------
+  /// The Event drawn today. It only takes effect once the quiz says so: see
+  /// [eventOutcome] and [activeEvent].
   EventCard? todayEvent;
+  EventOutcome eventOutcome = EventOutcome.pending;
+
+  /// Right answers entered by the Narrator after the quiz.
+  int? quizCorrect;
+
+  /// Order in which the quiz answers are shown (indexes into the answers).
+  List<int> quizOrder = const [0, 1, 2];
+
+  /// Set by tests that force an Event: no quiz steps for that day.
+  bool _quizSkipped = false;
   List<int> morningIds = [];
   List<String> morningNotes = [];
   List<int> verdictIds = [];
@@ -100,6 +125,10 @@ class GameController extends ChangeNotifier {
 
   List<int> sel(String key) => _sel[key] ?? const [];
   bool hasNone(String key) => _none.contains(key);
+
+  /// Today's Event, only if the quiz let it happen.
+  EventCard? get activeEvent =>
+      eventOutcome == EventOutcome.happens ? todayEvent : null;
 
   List<DownEntry> entries(Iterable<int> ids) => ids
       .map((i) => players[i])
@@ -229,6 +258,13 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Number of players who found the right quiz answer.
+  void setQuizCorrect(int n) {
+    if (phase != GamePhase.day || dayStage != DayStage.quizAnswer) return;
+    quizCorrect = n.clamp(0, alivePlayers.length).toInt();
+    notifyListeners();
+  }
+
   void answerPhish(int id, {required bool clicked}) {
     phishClicked[id] = clicked;
     notifyListeners();
@@ -283,9 +319,21 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Replaces today's drawn Event; the quiz still decides if it happens.
+  @visibleForTesting
+  void debugDrawEvent(EventCard card) {
+    _setDrawn(card);
+    notifyListeners();
+  }
+
+  /// Forces today's Event and applies it right away, without a quiz.
   @visibleForTesting
   void debugSetTodayEvent(EventCard card) {
-    _applyEvent(card);
+    todayEvent = card;
+    eventOutcome = EventOutcome.happens;
+    _quizSkipped = true;
+    _resetEventEffects();
+    _applyEffects(card);
     notifyListeners();
   }
 
@@ -304,8 +352,10 @@ class GameController extends ChangeNotifier {
     voteBanned = {};
     inChain = false;
 
-    nightEvent = todayEvent;
+    // A blocked Event has no effect tonight either.
+    nightEvent = activeEvent;
     todayEvent = null;
+    _clearQuiz();
     honeypotId = null;
     phishTargets = [];
     phishClicked.clear();
@@ -395,6 +445,7 @@ class GameController extends ChangeNotifier {
     ddosIndex = 0;
     todayEvent = null;
     nightEvent = null;
+    _clearQuiz();
     _sel.clear();
     _none.clear();
     restore = false;
@@ -490,13 +541,21 @@ class GameController extends ChangeNotifier {
   // Day flow
   // ---------------------------------------------------------------------------
 
-  List<DayStage> _visibleStages() => [
-        DayStage.morning,
-        if (electionToday || ciso == null) DayStage.election,
-        if (expert && night >= 2) DayStage.event,
-        if (!skipDebate) DayStage.debate,
-        DayStage.vote,
-      ];
+  List<DayStage> _visibleStages() {
+    final events = expert && night >= 2;
+    return [
+      DayStage.morning,
+      if (electionToday || ciso == null) DayStage.election,
+      if (events) DayStage.event,
+      if (events && !_quizSkipped) ...[
+        DayStage.quiz,
+        DayStage.quizAnswer,
+        DayStage.eventResult,
+      ],
+      if (!skipDebate) DayStage.debate,
+      DayStage.vote,
+    ];
+  }
 
   void _dayPrimary() {
     switch (dayStage) {
@@ -504,9 +563,14 @@ class GameController extends ChangeNotifier {
         _beginChain(thenNight: false);
       case DayStage.election:
       case DayStage.event:
+      case DayStage.quiz:
+      case DayStage.eventResult:
+        _goNextStage();
+      case DayStage.quizAnswer:
+        _resolveQuiz();
         _goNextStage();
       case DayStage.debate:
-        if (todayEvent == EventCard.ddos && ddosIndex < ddosOrder.length - 1) {
+        if (activeEvent == EventCard.ddos && ddosIndex < ddosOrder.length - 1) {
           ddosIndex++;
         } else {
           _goNextStage();
@@ -541,23 +605,64 @@ class GameController extends ChangeNotifier {
       case DayStage.event:
         if (todayEvent == null) _drawEvent();
       case DayStage.debate:
-        if (todayEvent == EventCard.ddos && ddosOrder.isEmpty) _buildDdosOrder();
+        if (activeEvent == EventCard.ddos && ddosOrder.isEmpty) _buildDdosOrder();
       default:
         break;
     }
   }
 
+  /// Draws today's Event. Nothing is applied yet: the quiz decides.
   void _drawEvent() {
     if (_deck.isEmpty) {
       _deck
         ..addAll(EventCard.values)
         ..shuffle(rng);
     }
-    _applyEvent(_deck.removeLast());
+    _setDrawn(_deck.removeLast());
   }
 
-  void _applyEvent(EventCard card) {
+  void _setDrawn(EventCard card) {
     todayEvent = card;
+    eventOutcome = EventOutcome.pending;
+    quizCorrect = null;
+    quizOrder = [0, 1, 2]..shuffle(rng);
+    _quizSkipped = false;
+    _resetEventEffects();
+  }
+
+  /// Blue Events need more than half right answers, Red Events are blocked by
+  /// more than half right answers, Chaos Events always happen.
+  void _resolveQuiz() {
+    final card = todayEvent;
+    if (card == null) return;
+    final majority = (quizCorrect ?? 0) * 2 > alivePlayers.length;
+    final happens = switch (card.info.side) {
+      EventSide.blue => majority,
+      EventSide.red => !majority,
+      EventSide.chaos => true,
+    };
+    _resetEventEffects();
+    eventOutcome = happens ? EventOutcome.happens : EventOutcome.blocked;
+    if (happens) _applyEffects(card);
+  }
+
+  void _clearQuiz() {
+    eventOutcome = EventOutcome.pending;
+    quizCorrect = null;
+    _quizSkipped = false;
+  }
+
+  void _resetEventEffects() {
+    skipDebate = false;
+    skipVote = false;
+    debateSeconds = 300;
+    ddosOrder = [];
+    ddosIndex = 0;
+  }
+
+  /// Day effects of an Event that happens. Night effects are read from
+  /// [nightEvent] by the night script.
+  void _applyEffects(EventCard card) {
     switch (card) {
       case EventCard.blackFridayRush:
         debateSeconds = 60;

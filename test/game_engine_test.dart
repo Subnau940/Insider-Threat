@@ -89,6 +89,8 @@ void toVote(GameController c, {int? ciso}) {
     final s = c.currentStep;
     if (s.kind == StepKind.election) {
       c.pick(ciso ?? c.alivePlayers.first.id);
+    } else if (s.kind == StepKind.quizAnswer) {
+      c.setQuizCorrect(0);
     } else if (s.kind == StepKind.dms || s.kind == StepKind.succession) {
       break;
     }
@@ -708,6 +710,113 @@ void main() {
     }
     expect(c.phase, GamePhase.end);
     expect(c.winner, isNotNull);
+  });
+
+  group('expert quiz', () {
+    /// Day 2 of an expert game (5 players left), stopped on the Event step
+    /// with [card] drawn.
+    GameController atEvent(EventCard card) {
+      final c = make(_eight, expert: true);
+      reachNight2(c);
+      playNight(c, victim: 3);
+      c.primary(); // morning
+      for (var g = 0; g < 8 && c.currentStep.kind != StepKind.event; g++) {
+        if (c.currentStep.kind == StepKind.election) c.pick(c.alivePlayers.first.id);
+        c.primary();
+      }
+      expect(c.currentStep.kind, StepKind.event);
+      expect(c.alivePlayers.length, 5);
+      c.debugDrawEvent(card);
+      return c;
+    }
+
+    /// Goes through the quiz, entering [right] correct answers.
+    void answer(GameController c, int right) {
+      c.primary(); // event -> quiz
+      final q = c.currentStep;
+      expect(q.kind, StepKind.quiz);
+      expect(q.quiz!.revealed, isFalse);
+      expect(q.clock!.seconds, 10);
+      c.primary(); // quiz -> answer
+      expect(c.currentStep.kind, StepKind.quizAnswer);
+      expect(c.currentStep.quiz!.revealed, isTrue);
+      expect(c.currentStep.canContinue, isFalse, reason: 'count not entered yet');
+      c.setQuizCorrect(right);
+      expect(c.currentStep.canContinue, isTrue);
+      c.primary(); // answer -> result
+      expect(c.currentStep.kind, StepKind.eventResult);
+    }
+
+    test('answers are shuffled but the right one is kept', () {
+      for (final card in EventCard.values) {
+        final c = atEvent(card);
+        c.primary();
+        final q = c.currentStep.quiz!;
+        expect(q.answers.toSet(), card.quiz.answers.toSet());
+        expect(q.answers[q.correct], card.quiz.answers[card.quiz.correct]);
+        expect(q.needed, 3, reason: 'more than half of 5');
+      }
+    });
+
+    test('Blue Event happens with more than half right', () {
+      final c = atEvent(EventCard.securityAudit);
+      answer(c, 3);
+      expect(c.eventOutcome, EventOutcome.happens);
+      expect(c.activeEvent, EventCard.securityAudit);
+      expect(c.currentStep.title, 'Security Audit happens');
+    });
+
+    test('Blue Event is blocked with half or less right, also at night', () {
+      final c = atEvent(EventCard.securityAudit);
+      answer(c, 2);
+      expect(c.eventOutcome, EventOutcome.blocked);
+      expect(c.activeEvent, isNull);
+      toVote(c);
+      quarantine(c, 0); // a Red Team member: no chain reaction
+      expect(c.phase, GamePhase.night);
+      expect(c.nightEvent, isNull);
+      final s = _stepOf(c, StepKind.hunter);
+      expect(s.picker!.max, 1, reason: 'no second inspection');
+    });
+
+    test('Red Event is blocked with more than half right', () {
+      final c = atEvent(EventCard.remoteWorkDay);
+      answer(c, 3);
+      expect(c.eventOutcome, EventOutcome.blocked);
+      expect(c.currentStep.say, contains('blocked'));
+      c.primary(); // result -> debate, not skipped
+      expect(c.currentStep.kind, StepKind.debate);
+    });
+
+    test('Red Event happens with half or less right', () {
+      final c = atEvent(EventCard.remoteWorkDay);
+      answer(c, 2);
+      expect(c.eventOutcome, EventOutcome.happens);
+      c.primary(); // result -> vote, no debate
+      expect(c.currentStep.kind, StepKind.vote);
+      expect(c.currentStep.say, contains('in silence'));
+    });
+
+    test('Chaos Event always happens', () {
+      final c = atEvent(EventCard.blackFridayRush);
+      answer(c, 5);
+      expect(c.eventOutcome, EventOutcome.happens);
+      c.primary();
+      expect(c.currentStep.kind, StepKind.debate);
+      expect(c.currentStep.clock!.seconds, 60);
+    });
+
+    test('going back and changing the count re-decides the Event', () {
+      final c = atEvent(EventCard.maintenanceWindow);
+      answer(c, 0); // Red Event, nobody right: it happens
+      expect(c.skipVote, isTrue);
+      c.back(); // result -> answer
+      expect(c.currentStep.kind, StepKind.quizAnswer);
+      c.setQuizCorrect(5);
+      c.primary();
+      expect(c.eventOutcome, EventOutcome.blocked);
+      expect(c.skipVote, isFalse);
+    });
   });
 }
 

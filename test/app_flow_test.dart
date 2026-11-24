@@ -88,6 +88,10 @@ void main() {
         for (final row in s.phish ?? const <PhishRow>[]) {
           game.answerPhish(row.id, clicked: rng.nextBool());
         }
+        final quiz = s.quiz;
+        if (quiz != null && quiz.revealed) {
+          game.setQuizCorrect(rng.nextInt(quiz.alive + 1));
+        }
         final picker = s.picker;
         if (picker != null) {
           final free = picker.tiles.where((x) => !x.locked).toList();

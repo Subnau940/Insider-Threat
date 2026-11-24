@@ -66,4 +66,22 @@ void main() {
       expect(t.takeException(), isNull);
     });
   }
+
+  testWidgets('the Incident Responder card turns over to show the character', (t) async {
+    await sized(t, const Size(390, 844));
+    await t.pumpWidget(const MaterialApp(home: RulesScreen(initialTab: RulesTab.roles)));
+    final list = find.byType(Scrollable).last;
+    await t.scrollUntilVisible(find.byTooltip('Show the character'), 200, scrollable: list);
+    expect(find.byTooltip('Back to the role'), findsNothing);
+
+    await t.tap(find.byTooltip('Show the character'));
+    await t.pumpAndSettle();
+    expect(find.byTooltip('Back to the role'), findsOneWidget);
+    expect(find.bySemanticsLabel('RESPAWN, the Incident Responder character'), findsOneWidget);
+
+    await t.tap(find.byTooltip('Back to the role'));
+    await t.pumpAndSettle();
+    expect(find.byTooltip('Back to the role'), findsNothing);
+    expect(t.takeException(), isNull);
+  });
 }

@@ -21,7 +21,8 @@ Jeu de déduction sociale inspiré des Loups-garous de Thiercelieux, transposé 
   - `card_code.dart` : format des QR des cartes, `INSIDERTHREAT:1:<role>:<nn>`.
 - `lib/ui/` :
   - `home_screen` ;
-  - `rules_screen` : bouton Rules de l'accueil, avec un sélecteur Game rules / Roles. Les règles reprennent `Insider-Threat-Rules-EN.pdf` (Events + quiz, sans les questions). Les rôles affichent le surnom, l'équivalent Loup-Garou (`RoleInfo.werewolf`) et le CISO ;
+  - `quiz_panel` : question, réponses, explication et saisie du nombre de bonnes réponses ;
+  - `rules_screen` : bouton Rules de l'accueil, avec un sélecteur Game rules / Roles. Les règles reprennent `Insider-Threat-Rules-EN.pdf` (Events + quiz, sans les questions). Les rôles affichent le surnom, l'équivalent Loup-Garou (`RoleInfo.werewolf`) et le CISO. Si un rôle a un dessin officiel dans `roleArt` (pour l'instant l'Incident Responder seulement, `assets/characters/`), sa carte se retourne vers la gauche pour l'afficher ;
   - `setup_screen`, avec le bouton « Deal at random » pour tester sans cartes ;
   - `scan_screen` (mobile_scanner) ;
   - `guide_screen` (toutes les étapes de nuit et de jour) ;
@@ -50,6 +51,15 @@ Le déroulé est repris de `/Users/elysabeth/Downloads/flutter_event_draw/` : al
 - **Fonctionnement :** le tirage est fait par le moteur, l'animation ne fait que révéler `todayEvent`. Elle se joue une seule fois par jour (`GameController.markEventRevealed`), avec un bouton « Replay the draw ».
 - **Accessibilité :** le réglage « réduire les animations » est respecté.
 - **Tests :** `Sfx.enabled = false`.
+
+## Quiz des Events (mode Expert)
+- **Déroulé du jour :** tirage avec l'animation (`event`), puis la question avec 3 réponses mélangées et un chrono de 10 s (`quiz`). Ensuite, la bonne réponse et son explication, avec la saisie du nombre de bonnes réponses parmi les joueurs encore en jeu (`quizAnswer`). Enfin, le résultat (`eventResult`).
+- **Règle :** « plus de la moitié » veut dire au moins `alive ~/ 2 + 1` joueurs.
+  - Un Event **Blue** n'a lieu que si plus de la moitié a bon.
+  - Un Event **Red** est bloqué si plus de la moitié a bon.
+  - Un Event **Chaos** a toujours lieu.
+- **Moteur :** `_drawEvent` ne fait plus que tirer la carte ; `_resolveQuiz` décide et applique les effets de jour (`_applyEffects`). `activeEvent` vaut `null` si l'Event est bloqué. La nuit reçoit `nightEvent = activeEvent`, donc un Event bloqué n'a aucun effet, ni le jour ni la nuit. Revenir en arrière puis changer le nombre de bonnes réponses fait recalculer le résultat.
+- **Questions :** elles sont dans `eventQuizzes` (`lib/game/events.dart`), avec des explications rédigées pour l'appli. Pour les tests, `debugSetTodayEvent` force un Event sans quiz, et `debugDrawEvent` force la carte tirée en gardant le quiz.
 
 ## Reste à faire ensuite
 - **Mode Expert plus visible :** choix Base / Expert, et badge pendant la partie.

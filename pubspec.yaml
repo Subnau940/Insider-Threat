@@ -65,6 +65,7 @@ flutter:
   assets:
     - assets/sfx/
     - assets/brand/
+    - assets/characters/
 
   fonts:
     - family: Satoshi
