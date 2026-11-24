@@ -42,7 +42,7 @@ GuideStep _buildDay(GameController c) {
         report: downs,
         banner: banner,
         canBack: false,
-        sfxName: 'Day soundtrack',
+        sfxName: 'Day ambience',
         stepNo: stepNo,
         total: total,
       );
@@ -104,9 +104,6 @@ GuideStep _buildDay(GameController c) {
     case DayStage.quiz:
       final ev = c.todayEvent!;
       final spec = _quizSpec(c, ev, revealed: false);
-      final lines = [
-        for (var i = 0; i < spec.answers.length; i++) '${i + 1}: ${spec.answers[i]}.',
-      ].join(' ');
       final mail = spec.email;
       final intro = mail == null
           ? ''
@@ -118,9 +115,9 @@ GuideStep _buildDay(GameController c) {
         sub: '${spec.alive} players answer',
         tag: ev.info.side.label,
         say:
-            '$intro${spec.question} $lines You have one minute to think. No talking.',
+            '$intro${spec.question} You have one minute to think. No talking.',
         todo:
-            'Read the question and the ${spec.answers.length} answers. When the timer ends, say: "Three... two... one... show your answer!" Every player still in the game shows ${spec.answers.length == 2 ? '1 or 2' : '1, 2 or 3'} fingers at the same time.',
+            'Read the question and the ${spec.answers.length} answers, then press Start. When the timer ends, say: "Three... two... one... show your answer!" Every player still in the game shows ${spec.answers.length == 2 ? '1 or 2' : '1, 2 or 3'} fingers at the same time.',
         quiz: spec,
         clock: ClockSpec(
           id: 'quiz-${c.night}',

@@ -66,7 +66,7 @@ GuideStep _buildNight(GameController c) {
             '${ev == EventCard.powerOutage ? ' Power outage: all special powers are offline tonight.' : ''}'
             '${ev == EventCard.phishing ? (c.phishSpotted ? ' The phishing campaign was spotted: the Red Team will not attack tonight.' : ' The phishing campaign worked: tonight the Red Team strikes twice.') : ''}',
         todo:
-            'Start the night soundtrack. Wait until the table is silent. Players never speak at night: they point.',
+            'The night ambience starts by itself. Wait until the table is silent. Players never speak at night: they point.',
         secret: hp == null
             ? null
             : 'Honeypot decoy: ${c.players[hp].name}. If the Red Team targets this machine tonight, the attack fails. Tell nobody.',
@@ -146,8 +146,8 @@ GuideStep _buildNight(GameController c) {
         todo: out
             ? _waitLine
             : need == 2
-                ? '${th!.name} points at two players. Tap both, then silently show ${th.name} both role cards, one after the other.'
-                : '${th!.name} points at a player. Tap that player, then silently show ${th.name} their role card.',
+                ? '${th!.name} points at two players. Tap both: the cards appear on screen. Silently turn the phone towards ${th.name}, one card after the other.'
+                : '${th!.name} points at a player. Tap that player: the card appears on screen. Silently turn the phone towards ${th.name}.',
         selKey: 'hunter',
         picker: out
             ? null
@@ -170,6 +170,13 @@ GuideStep _buildNight(GameController c) {
                         'Show ${th!.name} the role card of ${c.players[id].name}: ${c.players[id].role.info.name} (${c.players[id].role.info.character})',
                   ),
               ],
+        reveal: out || picks.length < need
+            ? const []
+            : [
+                for (final id in picks)
+                  RevealCard(name: c.players[id].name, info: c.players[id].role.info),
+              ],
+        revealTo: out ? '' : th!.name,
         canContinue: out || picks.length >= need,
         sfxName: 'Scanner ping',
         stepNo: stepNo,
@@ -361,7 +368,7 @@ GuideStep _buildNight(GameController c) {
         title: 'Dawn',
         sub: 'Eyes open',
         say: 'The night is over. Everyone, open your eyes.',
-        todo: 'Stop the night soundtrack and move on to the morning report.',
+        todo: 'The night ambience fades out by itself. Move on to the morning report.',
         primaryLabel: 'Morning report',
         sfxName: 'Sunrise chime',
         stepNo: stepNo,

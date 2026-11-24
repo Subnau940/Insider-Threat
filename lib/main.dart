@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'game/game_controller.dart';
+import 'game/guide_step.dart';
 import 'game/setup_controller.dart';
 import 'theme/app_theme.dart';
+import 'ui/event_draw/sfx.dart';
 import 'ui/end_screen.dart';
 import 'ui/guide_screen.dart';
 import 'ui/home_screen.dart';
@@ -11,7 +12,6 @@ import 'ui/setup_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(const InsiderThreatApp());
 }
 
@@ -43,24 +43,45 @@ class _AppRootState extends State<AppRoot> {
 
   @override
   void dispose() {
+    _game?.removeListener(_syncAmbience);
     _game?.dispose();
     _setup.dispose();
     super.dispose();
   }
 
   void _start() {
+    _game?.removeListener(_syncAmbience);
     _game?.dispose();
     setState(() {
       _game = GameController(
         players: _setup.buildPlayers(),
         expert: _setup.expert,
-      );
+      )..addListener(_syncAmbience);
       _screen = _Screen.game;
     });
+    _syncAmbience();
+  }
+
+  /// The night ambience plays from Nightfall until Dawn, the day ambience
+  /// from the morning report until Nightfall. Each fades out when it ends.
+  void _syncAmbience() {
+    final game = _game;
+    final night = game != null &&
+        game.phase == GamePhase.night &&
+        game.currentStep.kind != StepKind.dawn;
+    final day = game != null && game.phase == GamePhase.day;
+    final sfx = Sfx.instance;
+    night ? sfx.loop(SfxId.nightAmbience) : sfx.fadeOut(SfxId.nightAmbience);
+    // Quieter: the table talks over it all day.
+    day ? sfx.loop(SfxId.dayAmbience, volume: 0.35) : sfx.fadeOut(SfxId.dayAmbience);
   }
 
   void _toSetup() {
+    _game?.removeListener(_syncAmbience);
     _game?.dispose();
+    Sfx.instance
+      ..fadeOut(SfxId.nightAmbience)
+      ..fadeOut(SfxId.dayAmbience);
     _setup.clearRoles(); // names stay, new cards are dealt
     setState(() {
       _game = null;

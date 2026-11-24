@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../game/events.dart';
 import '../game/models.dart';
 import '../theme/app_theme.dart';
+import 'role_card_face.dart';
 import 'widgets.dart';
 
 /// The two views of the Rules screen.
@@ -527,11 +528,7 @@ class _RolesView extends StatelessWidget {
           child: _P('Each player secretly gets one role card. The character\'s nickname is printed on '
               'the card. Here is every role, its power and its match in the original Werewolf game.'),
         ),
-        for (final id in roleDisplayOrder)
-          if (roleArt[id] != null)
-            _FlipRoleCard(info: id.info, art: roleArt[id]!)
-          else
-            _RoleTile(id.info),
+        for (final id in roleDisplayOrder) _FlipRoleCard(info: id.info),
         const _CisoTile(),
       ],
     );
@@ -641,11 +638,6 @@ class _CisoTile extends StatelessWidget {
 }
 
 
-/// Official character art, by role. Roles without art show the plain card.
-const Map<RoleId, String> roleArt = {
-  RoleId.incidentResponder: 'assets/characters/incident_responder.png',
-  RoleId.socAnalyst: 'assets/characters/soc_analyst.png',
-};
 
 class _FlipButton extends StatelessWidget {
   const _FlipButton({
@@ -672,13 +664,12 @@ class _FlipButton extends StatelessWidget {
       );
 }
 
-/// A role card that turns over (to the left) to show the character's
-/// official design, and back.
+/// A role card that turns over (to the left) to show the character side,
+/// and back.
 class _FlipRoleCard extends StatefulWidget {
-  const _FlipRoleCard({required this.info, required this.art});
+  const _FlipRoleCard({required this.info});
 
   final RoleInfo info;
-  final String art;
 
   @override
   State<_FlipRoleCard> createState() => _FlipRoleCardState();
@@ -711,7 +702,15 @@ class _FlipRoleCardState extends State<_FlipRoleCard> with SingleTickerProviderS
   @override
   Widget build(BuildContext context) {
     final front = _RoleTile(widget.info, onFlip: _toggle, margin: EdgeInsets.zero);
-    final back = _CharacterFace(info: widget.info, art: widget.art, onFlip: _toggle);
+    final back = RoleCardFace(
+      info: widget.info,
+      trailing: _FlipButton(
+        icon: Icons.arrow_forward_rounded,
+        tooltip: 'Back to the role',
+        color: AppColors.team(widget.info.team),
+        onTap: _toggle,
+      ),
+    );
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: ConstrainedBox(
@@ -753,84 +752,6 @@ class _FlipRoleCardState extends State<_FlipRoleCard> with SingleTickerProviderS
               ),
             );
           },
-        ),
-      ),
-    );
-  }
-}
-
-/// Back of the card: the character's official design.
-class _CharacterFace extends StatelessWidget {
-  const _CharacterFace({required this.info, required this.art, required this.onFlip});
-
-  final RoleInfo info;
-  final String art;
-  final VoidCallback onFlip;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = AppColors.team(info.team);
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
-      child: DecoratedBox(
-        // The art has no background: a dark card with a glow of the team colour.
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          gradient: RadialGradient(
-            center: const Alignment(0, -.1),
-            radius: .9,
-            colors: [color.withValues(alpha: .28), AppColors.surface],
-          ),
-          border: Border.all(color: color.withValues(alpha: .6), width: 2),
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              color: color,
-              padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      info.name.toUpperCase(),
-                      style: AppText.body(13,
-                          weight: FontWeight.w700, color: AppColors.onAccent, spacing: .8),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Back to the role',
-                    onPressed: onFlip,
-                    icon: const Icon(Icons.arrow_forward_rounded, color: AppColors.onAccent, size: 20),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Image.asset(
-                  art,
-                  fit: BoxFit.contain,
-                  semanticLabel: '${info.character}, the ${info.name} character',
-                ),
-              ),
-            ),
-            Container(
-              color: AppColors.bg,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(info.character,
-                        style: AppText.ui(22, weight: FontWeight.w700, color: color)),
-                  ),
-                  Text('Werewolf: ${info.werewolf}', style: AppText.body(12, color: AppColors.muted)),
-                ],
-              ),
-            ),
-          ],
         ),
       ),
     );

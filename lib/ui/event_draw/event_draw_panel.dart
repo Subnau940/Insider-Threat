@@ -121,6 +121,8 @@ class _EventDrawPanelState extends State<EventDrawPanel>
   @override
   void dispose() {
     _run++;
+    final own = widget.card.revealSfx;
+    if (own != null) Sfx.instance.fadeOut(own);
     for (final c in _all) {
       c.dispose();
     }
@@ -175,7 +177,7 @@ class _EventDrawPanelState extends State<EventDrawPanel>
       if (!_alive(run)) return;
 
       // 5. reveal: glow, decoded title, staggered blocks
-      sfx.play(widget.card.info.side.revealSfx);
+      sfx.play(widget.card.revealSfx ?? widget.card.info.side.revealSfx);
       unawaited(_glow.forward(from: 0).orCancel.catchError((_) {}));
       final reveal = _reveal.forward(from: 0).orCancel;
       await _scramble(_fullTitle, const Duration(milliseconds: 650), run);

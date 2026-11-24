@@ -12,6 +12,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (isShortLandscape(context)) return _landscape(context);
     // Small phones get tighter spacing so everything still fits.
     final compact = MediaQuery.sizeOf(context).height < 700;
     return NeonBackground(
@@ -21,46 +22,76 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 300),
-              child: SvgPicture.asset(
-                'assets/brand/logo_typo.svg',
-                semanticsLabel: 'Insider Threat',
-              ),
-            ),
-            SizedBox(height: compact ? 24 : 44),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 300),
-              child: Text(
-                'A social deduction game on a compromised network.',
-                textAlign: TextAlign.center,
-                style: AppText.body(16,
-                    weight: FontWeight.w400,
-                    color: AppColors.textSoft,
-                    height: 1.5),
-              ),
-            ),
-            SizedBox(height: compact ? 16 : 24),
-            const TagChip('Narrator companion'),
+            ..._brand(compact),
             const Spacer(),
-            NeonButton(label: 'New game', onPressed: onNewGame),
-            const SizedBox(height: 12),
-            NeonButton(
-              label: 'Rules',
-              variant: NeonVariant.ghost,
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const RulesScreen()),
-              ),
-            ),
-            const SizedBox(height: 14),
-            const SizedBox(
-              width: double.infinity,
-              child: Lbl('6-14 players + 1 Narrator · 20-40 min',
-                  align: TextAlign.center),
-            ),
+            ..._actions(context),
           ],
         ),
       ),
     );
   }
+
+  /// Phone held sideways: brand on the left, actions on the right.
+  Widget _landscape(BuildContext context) => NeonBackground(
+        mood: Mood.night,
+        maxWidth: 820,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(children: _brand(true)),
+                ),
+              ),
+              const SizedBox(width: 32),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: _actions(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+  List<Widget> _brand(bool compact) => [
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 300),
+          child: SvgPicture.asset(
+            'assets/brand/logo_typo.svg',
+            semanticsLabel: 'Insider Threat',
+          ),
+        ),
+        SizedBox(height: compact ? 24 : 44),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 300),
+          child: Text(
+            'A social deduction game on a compromised network.',
+            textAlign: TextAlign.center,
+            style: AppText.body(16,
+                weight: FontWeight.w400, color: AppColors.textSoft, height: 1.5),
+          ),
+        ),
+        SizedBox(height: compact ? 16 : 24),
+        const TagChip('Narrator companion'),
+      ];
+
+  List<Widget> _actions(BuildContext context) => [
+        NeonButton(label: 'New game', onPressed: onNewGame),
+        const SizedBox(height: 12),
+        NeonButton(
+          label: 'Rules',
+          variant: NeonVariant.ghost,
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const RulesScreen()),
+          ),
+        ),
+        const SizedBox(height: 14),
+        const SizedBox(
+          width: double.infinity,
+          child: Lbl('6-14 players + 1 Narrator · 20-40 min', align: TextAlign.center),
+        ),
+      ];
 }

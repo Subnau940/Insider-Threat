@@ -5,6 +5,7 @@ import '../game/guide_step.dart';
 import '../theme/app_theme.dart';
 import 'event_draw/event_draw_panel.dart';
 import 'quiz_panel.dart';
+import 'role_reveal.dart';
 import 'widgets.dart';
 
 /// The Narrator's main screen, used for every night and day step.
@@ -23,68 +24,99 @@ class GuideScreen extends StatelessWidget {
     final pageKey =
         '${game.phase.name}-${game.night}-${step.kind.name}-${step.stepNo}-${step.title}';
 
+    final header = Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 8, 0),
+      child: Row(
+        children: [
+          TagChip(phaseLabel),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Lbl(
+              step.progressLabel ?? 'Step ${step.stepNo} / ${step.total}',
+              align: TextAlign.right,
+            ),
+          ),
+          IconButton(
+            tooltip: 'Quit the game',
+            onPressed: onQuit,
+            icon: const Icon(Icons.close, color: AppColors.muted),
+          ),
+        ],
+      ),
+    );
+    final body = Expanded(
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 220),
+        child: SingleChildScrollView(
+          key: ValueKey(pageKey),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+          child: _StepBody(game: game, step: step),
+        ),
+      ),
+    );
+    final back = NeonButton(
+      label: 'Back',
+      variant: NeonVariant.ghost,
+      onPressed: step.canBack ? game.back : null,
+    );
+    final primary = NeonButton(
+      label: step.primaryLabel,
+      variant: step.primaryStyle == PrimaryStyle.red
+          ? NeonVariant.red
+          : NeonVariant.primary,
+      onPressed: step.canContinue ? game.primary : null,
+    );
+    final landscape = isShortLandscape(context);
+    final sound = step.sfxName.isEmpty
+        ? null
+        : _SoundPlaceholder(name: step.sfxName, stacked: landscape);
+
+    if (landscape) {
+      // Phone held sideways: the step scrolls on the left, actions stay in a
+      // rail on the right so the text keeps the full height.
+      return NeonBackground(
+        mood: isNight ? Mood.night : Mood.day,
+        maxWidth: 900,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: Column(children: [header, body])),
+            SizedBox(
+              width: 220,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(0, 16, 20, 16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (sound != null) ...[sound, const SizedBox(height: 10)],
+                    primary,
+                    const SizedBox(height: 10),
+                    back,
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return NeonBackground(
       mood: isNight ? Mood.night : Mood.day,
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 8, 0),
-            child: Row(
-              children: [
-                TagChip(phaseLabel),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Lbl(
-                    step.progressLabel ?? 'Step ${step.stepNo} / ${step.total}',
-                    align: TextAlign.right,
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Quit the game',
-                  onPressed: onQuit,
-                  icon: const Icon(Icons.close, color: AppColors.muted),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 220),
-              child: SingleChildScrollView(
-                key: ValueKey(pageKey),
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                child: _StepBody(game: game, step: step),
-              ),
-            ),
-          ),
+          header,
+          body,
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
             child: Column(
               children: [
-                if (step.sfxName.isNotEmpty) ...[
-                  _SoundPlaceholder(name: step.sfxName),
-                  const SizedBox(height: 10),
-                ],
+                if (sound != null) ...[sound, const SizedBox(height: 10)],
                 Row(
                   children: [
-                    Expanded(
-                      child: NeonButton(
-                        label: 'Back',
-                        variant: NeonVariant.ghost,
-                        onPressed: step.canBack ? game.back : null,
-                      ),
-                    ),
+                    Expanded(child: back),
                     const SizedBox(width: 10),
-                    Expanded(
-                      flex: 2,
-                      child: NeonButton(
-                        label: step.primaryLabel,
-                        variant: step.primaryStyle == PrimaryStyle.red
-                            ? NeonVariant.red
-                            : NeonVariant.primary,
-                        onPressed: step.canContinue ? game.primary : null,
-                      ),
-                    ),
+                    Expanded(flex: 2, child: primary),
                   ],
                 ),
               ],
@@ -101,6 +133,16 @@ class _StepBody extends StatelessWidget {
 
   final GameController game;
   final GuideStep step;
+
+  /// Picks a tile. When that completes a pick that reveals role cards
+  /// (Threat Hunter), the cards open full screen right away.
+  void _pick(BuildContext context, int id) {
+    game.pick(id);
+    final next = game.currentStep;
+    if (next.reveal.isNotEmpty && game.sel(next.selKey ?? '').contains(id)) {
+      showRoleReveal(context, viewer: next.revealTo, cards: next.reveal);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -139,20 +181,6 @@ class _StepBody extends StatelessWidget {
       if (step.notice.isNotEmpty) DownList(entries: step.notice, compact: true),
       if (step.banner != null) BannerCard(text: step.banner!),
       SayCard(text: step.say),
-      Text.rich(
-        TextSpan(
-          children: [
-            TextSpan(
-              text: 'Do  ',
-              style: AppText.body(14,
-                  weight: FontWeight.w700, color: AppColors.secondarySoft),
-            ),
-            TextSpan(text: step.todo),
-          ],
-        ),
-        style: AppText.body(14,
-            weight: FontWeight.w400, color: AppColors.muted, height: 1.5),
-      ),
       if (step.secret != null) SecretCard(text: step.secret!),
       if (step.quiz != null)
         QuizPanel(spec: step.quiz!, onCount: game.setQuizCorrect),
@@ -168,8 +196,20 @@ class _StepBody extends StatelessWidget {
           onKill: game.toggleKill,
         ),
       if (step.picker != null)
-        PickerGrid(spec: step.picker!, onPick: game.pick, onNone: game.pickNone),
+        PickerGrid(
+          spec: step.picker!,
+          onPick: (id) => _pick(context, id),
+          onNone: game.pickNone,
+        ),
       for (final r in step.results) ResultRow(line: r),
+      if (step.reveal.isNotEmpty)
+        NeonButton(
+          label: step.reveal.length > 1 ? 'Show the cards again' : 'Show the card again',
+          variant: NeonVariant.ghost,
+          height: 48,
+          fontSize: 14,
+          onPressed: () => showRoleReveal(context, viewer: step.revealTo, cards: step.reveal),
+        ),
     ];
 
     return Column(
@@ -184,27 +224,42 @@ class _StepBody extends StatelessWidget {
   }
 }
 
-/// Shows which sound belongs to this step. Audio is not wired in yet, so this
-/// is deliberately not presented as a play button.
+/// Shows which sound belongs to this step. It is deliberately not presented
+/// as a play button: wired sounds play by themselves.
 class _SoundPlaceholder extends StatelessWidget {
-  const _SoundPlaceholder({required this.name});
+  const _SoundPlaceholder({required this.name, this.stacked = false});
+
+  /// Sounds the app already plays on its own.
+  static const _wired = {'Night ambience', 'Day ambience'};
 
   final String name;
 
+  String get _note => _wired.contains(name) ? 'Plays by itself' : 'Audio coming soon';
+
+  /// Narrow side rail (landscape): the note goes under the sound name.
+  final bool stacked;
+
   @override
-  Widget build(BuildContext context) => Row(
-        children: [
-          const Icon(Icons.graphic_eq, size: 16, color: AppColors.muted),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppText.body(13, color: AppColors.muted),
-            ),
+  Widget build(BuildContext context) {
+    final title = Row(
+      children: [
+        const Icon(Icons.graphic_eq, size: 16, color: AppColors.muted),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            name,
+            maxLines: stacked ? 2 : 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.body(13, color: AppColors.muted),
           ),
-          const Lbl('Audio coming soon'),
-        ],
-      );
+        ),
+        if (!stacked) Lbl(_note),
+      ],
+    );
+    if (!stacked) return title;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [title, const SizedBox(height: 2), Lbl(_note)],
+    );
+  }
 }

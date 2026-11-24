@@ -89,6 +89,15 @@ class ResultLine {
   final String text;
 }
 
+/// A role card the Narrator can show on screen, turned towards a player.
+class RevealCard {
+  const RevealCard({required this.name, required this.info});
+
+  /// The player whose card it is.
+  final String name;
+  final RoleInfo info;
+}
+
 class ToolsSpec {
   const ToolsSpec({
     required this.restoreOn,
@@ -211,6 +220,8 @@ class GuideStep {
     this.selKey,
     this.picker,
     this.results = const [],
+    this.reveal = const [],
+    this.revealTo = '',
     this.report,
     this.notice = const [],
     this.clock,
@@ -247,6 +258,10 @@ class GuideStep {
   final String? selKey;
   final PickerSpec? picker;
   final List<ResultLine> results;
+
+  /// Role cards to show on screen once the pick is complete, and to whom.
+  final List<RevealCard> reveal;
+  final String revealTo;
 
   /// null = no report block; empty list = "quiet night".
   final List<DownEntry>? report;

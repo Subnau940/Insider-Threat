@@ -5,15 +5,31 @@ import 'package:flutter/material.dart';
 import '../game/guide_step.dart';
 import '../game/models.dart';
 import '../theme/app_theme.dart';
+import 'event_draw/sfx.dart';
 
 enum Mood { night, day, endBlue, endRed }
 
+/// True on a phone held sideways: wider than tall and too short for the
+/// stacked portrait layout. Screens then move their actions to a side rail.
+bool isShortLandscape(BuildContext context) {
+  final size = MediaQuery.sizeOf(context);
+  return size.width > size.height && size.height < 560;
+}
+
 /// Full-screen background with the prototype's soft glows.
 class NeonBackground extends StatelessWidget {
-  const NeonBackground({super.key, required this.mood, required this.child});
+  const NeonBackground({
+    super.key,
+    required this.mood,
+    required this.child,
+    this.maxWidth = 520,
+  });
 
   final Mood mood;
   final Widget child;
+
+  /// Width of the centred content column. Landscape layouts pass more.
+  final double maxWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +64,7 @@ class NeonBackground extends StatelessWidget {
           child: SafeArea(
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 520),
+                constraints: BoxConstraints(maxWidth: maxWidth),
                 child: child,
               ),
             ),
@@ -538,21 +554,46 @@ class CountdownClock extends StatefulWidget {
 class _CountdownClockState extends State<CountdownClock> {
   late int _left = widget.spec.seconds;
   late int _max = widget.spec.seconds;
-  bool _running = true;
+  bool _running = false;
+  bool _started = false;
   Timer? _timer;
+
+  /// The warning sound lasts 7 seconds: it starts here so it ends at 00:00.
+  static const _warnAt = 7;
+  bool _warning = false;
 
   @override
   void initState() {
     super.initState();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (_running && _left > 0) setState(() => _left--);
+      if (!_running || _left == 0) return;
+      setState(() => _left--);
+      if (_left == _warnAt && !_warning) {
+        _warning = true;
+        Sfx.instance.play(SfxId.timerWarning);
+      }
     });
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _stopWarning();
     super.dispose();
+  }
+
+  void _stopWarning() {
+    if (!_warning) return;
+    _warning = false;
+    Sfx.instance.stop(SfxId.timerWarning);
+  }
+
+  void _toggleRunning() {
+    setState(() => _running = !_running);
+    if (!_warning) return;
+    _running
+        ? Sfx.instance.resume(SfxId.timerWarning)
+        : Sfx.instance.pause(SfxId.timerWarning);
   }
 
   String get _text =>
@@ -595,7 +636,18 @@ class _CountdownClockState extends State<CountdownClock> {
               color: over ? AppColors.danger : AppColors.primary,
             ),
           ),
-          if (widget.spec.controls) ...[
+          if (!_started) ...[
+            const SizedBox(height: 12),
+            NeonButton(
+              label: 'Start',
+              height: 46,
+              fontSize: 13,
+              onPressed: () => setState(() {
+                _started = true;
+                _running = true;
+              }),
+            ),
+          ] else if (widget.spec.controls) ...[
             const SizedBox(height: 12),
             Row(
               children: [
@@ -605,7 +657,7 @@ class _CountdownClockState extends State<CountdownClock> {
                     variant: NeonVariant.ghost,
                     height: 46,
                     fontSize: 13,
-                    onPressed: () => setState(() => _running = !_running),
+                    onPressed: _toggleRunning,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -616,6 +668,7 @@ class _CountdownClockState extends State<CountdownClock> {
                     height: 46,
                     fontSize: 13,
                     onPressed: () => setState(() {
+                      _stopWarning();
                       _left += 60;
                       if (_left > _max) _max = _left;
                     }),
