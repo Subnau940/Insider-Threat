@@ -11,7 +11,6 @@ enum StepKind {
   engineer,
   linked,
   hunter,
-  phishing,
   red,
   redSolo,
   purple,
@@ -123,16 +122,6 @@ class ClockSpec {
   final String label;
 }
 
-class PhishRow {
-  const PhishRow({required this.id, required this.name, required this.clicked});
-
-  final int id;
-  final String name;
-
-  /// null = no answer yet, true = clicked, false = reported.
-  final bool? clicked;
-}
-
 /// The Expert mode quiz shown after an Event is drawn.
 class QuizSpec {
   const QuizSpec({
@@ -144,6 +133,9 @@ class QuizSpec {
     required this.revealed,
     required this.alive,
     required this.correctCount,
+    this.email,
+    this.majorityRight,
+    this.majorityWrong,
   });
 
   final String question;
@@ -164,6 +156,14 @@ class QuizSpec {
 
   /// Right answers entered by the Narrator, null until entered.
   final int? correctCount;
+
+  /// Phishing Campaign: the email the players judge.
+  final PhishEmail? email;
+
+  /// Custom result lines (Phishing Campaign: bonus or malus), shown once
+  /// the count is entered. Null for the usual happens / blocked rule.
+  final String? majorityRight;
+  final String? majorityWrong;
 
   /// "More than half" of the players still in the game.
   int get needed => alive ~/ 2 + 1;
@@ -216,7 +216,6 @@ class GuideStep {
     this.clock,
     this.tools,
     this.event,
-    this.phish,
     this.ddos,
     this.quiz,
     this.canContinue = true,
@@ -257,7 +256,6 @@ class GuideStep {
   final ClockSpec? clock;
   final ToolsSpec? tools;
   final EventCard? event;
-  final List<PhishRow>? phish;
   final DdosSpec? ddos;
   final QuizSpec? quiz;
 

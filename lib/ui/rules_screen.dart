@@ -407,7 +407,7 @@ class _RulesView extends StatelessWidget {
         const _List([
           'From Day 2, after the morning report, the app draws an Event. The Narrator reads its name.',
           'The app shows a **quiz question** about this threat, with **3 answers**. The Narrator reads it.',
-          'Players think for 10 seconds without talking.',
+          'Players think for 1 minute without talking.',
           'On "3, 2, 1", every player still in the game shows **1, 2 or 3 fingers** at the same time.',
           'The app shows the right answer and a short explanation.',
           'The result decides the Event.',
@@ -464,6 +464,8 @@ const _quizResults = [
   _QuizResult(EventSide.red,
       'If **more than half** of the players are right, the company was ready: the Event is **blocked**. Otherwise, it happens.'),
   _QuizResult(EventSide.chaos, 'The Event **always happens**. The quiz is still played.'),
+  _QuizResult(EventSide.chaos,
+      '**Phishing Campaign** is special: the quiz shows an email, legitimate or phishing. **Majority right**: malus for the Red Team, their attack fails tonight. **Majority wrong**: bonus for the Red Team, they compromise 2 machines tonight.'),
 ];
 
 class _EventTile extends StatelessWidget {
@@ -642,6 +644,7 @@ class _CisoTile extends StatelessWidget {
 /// Official character art, by role. Roles without art show the plain card.
 const Map<RoleId, String> roleArt = {
   RoleId.incidentResponder: 'assets/characters/incident_responder.png',
+  RoleId.socAnalyst: 'assets/characters/soc_analyst.png',
 };
 
 class _FlipButton extends StatelessWidget {
@@ -770,8 +773,14 @@ class _CharacterFace extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(18),
       child: DecoratedBox(
+        // The art has no background: a dark card with a glow of the team colour.
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
+          gradient: RadialGradient(
+            center: const Alignment(0, -.1),
+            radius: .9,
+            colors: [color.withValues(alpha: .28), AppColors.surface],
+          ),
           border: Border.all(color: color.withValues(alpha: .6), width: 2),
           borderRadius: BorderRadius.circular(18),
         ),

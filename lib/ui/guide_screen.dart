@@ -167,11 +167,6 @@ class _StepBody extends StatelessWidget {
           onRestore: game.toggleRestore,
           onKill: game.toggleKill,
         ),
-      if (step.phish != null)
-        PhishAnswers(
-          rows: step.phish!,
-          onAnswer: (id, clicked) => game.answerPhish(id, clicked: clicked),
-        ),
       if (step.picker != null)
         PickerGrid(spec: step.picker!, onPick: game.pick, onNone: game.pickNone),
       for (final r in step.results) ResultRow(line: r),

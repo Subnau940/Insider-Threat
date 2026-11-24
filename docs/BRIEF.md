@@ -22,7 +22,7 @@ Jeu de déduction sociale inspiré des Loups-garous de Thiercelieux, transposé 
 - `lib/ui/` :
   - `home_screen` ;
   - `quiz_panel` : question, réponses, explication et saisie du nombre de bonnes réponses ;
-  - `rules_screen` : bouton Rules de l'accueil, avec un sélecteur Game rules / Roles. Les règles reprennent `Insider-Threat-Rules-EN.pdf` (Events + quiz, sans les questions). Les rôles affichent le surnom, l'équivalent Loup-Garou (`RoleInfo.werewolf`) et le CISO. Si un rôle a un dessin officiel dans `roleArt` (pour l'instant l'Incident Responder seulement, `assets/characters/`), sa carte se retourne vers la gauche pour l'afficher ;
+  - `rules_screen` : bouton Rules de l'accueil, avec un sélecteur Game rules / Roles. Les règles reprennent `Insider-Threat-Rules-EN.pdf` (Events + quiz, sans les questions). Les rôles affichent le surnom, l'équivalent Loup-Garou (`RoleInfo.werewolf`) et le CISO. Si un rôle a un dessin officiel dans `roleArt` (Incident Responder et SOC Analyst pour l'instant, PNG sans fond dans `assets/characters/`), sa carte se retourne vers la gauche pour l'afficher ;
   - `setup_screen`, avec le bouton « Deal at random » pour tester sans cartes ;
   - `scan_screen` (mobile_scanner) ;
   - `guide_screen` (toutes les étapes de nuit et de jour) ;
@@ -63,6 +63,12 @@ Le déroulé est repris de `/Users/elysabeth/Downloads/flutter_event_draw/` : al
   - Un Event **Red** est bloqué si plus de la moitié a bon.
   - Un Event **Chaos** a toujours lieu.
 - **Moteur :** `_drawEvent` ne fait plus que tirer la carte ; `_resolveQuiz` décide et applique les effets de jour (`_applyEffects`). `activeEvent` vaut `null` si l'Event est bloqué. La nuit reçoit `nightEvent = activeEvent`, donc un Event bloqué n'a aucun effet, ni le jour ni la nuit. Revenir en arrière puis changer le nombre de bonnes réponses fait recalculer le résultat.
+- **Phishing Campaign (version simplifiée) :**
+  - Le quiz affiche un e-mail tiré au hasard dans `phishEmails`, légitime ou phishing. Les joueurs répondent en levant 1 doigt pour « Legitimate » ou 2 pour « Phishing ».
+  - Si la majorité a bon, c'est un malus pour la Red Team : elle n'est pas appelée la nuit suivante, donc pas d'attaque.
+  - Si la majorité se trompe, c'est un bonus pour la Red Team : elle compromet 2 joueurs cette nuit-là. Le second ne peut pas être sauvé par le Backup Restore.
+  - L'ancienne étape de nuit (3 destinataires, cliquer ou signaler) est supprimée.
+- **Chronos courts à 1 minute :** réflexion du quiz, temps de parole DDoS et Dead Man's Switch. Le débat reste à 3 min et l'élection du CISO à 1 min.
 - **Questions :** elles sont dans `eventQuizzes` (`lib/game/events.dart`), avec des explications rédigées pour l'appli.
 
 ## Reste à faire ensuite

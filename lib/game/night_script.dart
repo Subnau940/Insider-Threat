@@ -22,12 +22,13 @@ List<(StepKind, int)> _nightPlan(GameController c) {
   if (!outage && c.inPlay.contains(RoleId.threatHunter)) {
     plan.add((StepKind.hunter, 0));
   }
-  if (ev == EventCard.phishing) plan.add((StepKind.phishing, 0));
+  // Phishing spotted: the Red Team's attack fails, they are not called.
+  final phishBlocked = ev == EventCard.phishing && c.phishSpotted;
   if (ev == EventCard.c2ServerDown) {
     for (final a in _attackersOf(c)) {
       plan.add((StepKind.redSolo, a.id));
     }
-  } else {
+  } else if (!phishBlocked) {
     plan.add((StepKind.red, 0));
   }
   if (!outage && c.night.isEven && c.inPlay.contains(RoleId.purple)) {
@@ -62,7 +63,8 @@ GuideStep _buildNight(GameController c) {
         sub: 'Eyes closed',
         tag: ev == null ? null : 'Event: ${ev.info.title}',
         say: 'Night falls on CORP-LAN. All employees, log off and close your eyes.'
-            '${ev == EventCard.powerOutage ? ' Power outage: all special powers are offline tonight.' : ''}',
+            '${ev == EventCard.powerOutage ? ' Power outage: all special powers are offline tonight.' : ''}'
+            '${ev == EventCard.phishing ? (c.phishSpotted ? ' The phishing campaign was spotted: the Red Team will not attack tonight.' : ' The phishing campaign worked: tonight the Red Team strikes twice.') : ''}',
         todo:
             'Start the night soundtrack. Wait until the table is silent. Players never speak at night: they point.',
         secret: hp == null
@@ -175,56 +177,35 @@ GuideStep _buildNight(GameController c) {
         canBack: canBack,
       );
 
-    case StepKind.phishing:
-      final names = c.phishTargets.map((id) => c.players[id].name).toList();
-      return GuideStep(
-        kind: kind,
-        kicker: 'Event · before the Red Team',
-        title: 'Phishing campaign',
-        sub: names.join(', '),
-        say:
-            'You received an urgent email from IT: your password expires today, click here to reset it.',
-        todo:
-            'Tap each recipient on the shoulder. They answer with their eyes closed: thumb up to click, thumb down to report. Record each answer.',
-        secret:
-            'Secret coin: ${c.phishReal ? 'REAL phishing' : 'LEGIT email'}. Do not reveal it before the morning.',
-        phish: [
-          for (final id in c.phishTargets)
-            PhishRow(
-              id: id,
-              name: c.players[id].name,
-              clicked: c.phishClicked[id],
-            ),
-        ],
-        canContinue: c.phishTargets.every((id) => c.phishClicked[id] != null),
-        sfxName: 'Alert beep',
-        stepNo: stepNo,
-        total: total,
-        canBack: canBack,
-      );
-
     case StepKind.red:
       final attackers = _attackersOf(c);
+      // Phishing worked: stolen credentials give the Red Team a second victim.
+      final twice = ev == EventCard.phishing && !c.phishSpotted;
+      final targets = c.players.where((p) => p.alive && p.team == Team.blue).length;
+      final need = twice ? min(2, targets) : 1;
       return GuideStep(
         kind: kind,
         kicker: 'Wakes up',
         title: 'Red Team',
         team: Team.red,
         sub: attackers.map((p) => p.name).join(', '),
-        say:
-            'Red Team, wake up. Look at each other. Silently choose one machine to compromise. Red Team, go back to sleep.',
-        todo:
-            'They point at a player and you nod to confirm. Tap the victim. ${ev == EventCard.powerOutage ? 'Power outage: the SOC Analyst cannot peek.' : 'The SOC Analyst may peek.'}',
+        say: twice
+            ? 'Red Team, wake up. Look at each other. With the stolen credentials, silently choose two machines to compromise. Red Team, go back to sleep.'
+            : 'Red Team, wake up. Look at each other. Silently choose one machine to compromise. Red Team, go back to sleep.',
+        todo: twice
+            ? 'They point at two players and you nod to confirm. Tap both. The first one is tonight\'s victim for the Incident Responder; the second cannot be restored. The SOC Analyst may peek.'
+            : 'They point at a player and you nod to confirm. Tap the victim. ${ev == EventCard.powerOutage ? 'Power outage: the SOC Analyst cannot peek.' : 'The SOC Analyst may peek.'}',
         selKey: 'red',
         picker: PickerSpec(
-          label: 'Tap the victim',
+          label: twice ? 'Tap the two victims (${c.sel('red').length}/2)' : 'Tap the victim',
           tiles: c._tiles(
             selected: c.sel('red').toSet(),
             lock: (p) => p.team != Team.blue,
           ),
           style: PickStyle.red,
+          max: twice ? 2 : 1,
         ),
-        canContinue: c.sel('red').isNotEmpty,
+        canContinue: c.sel('red').length >= max(need, 1),
         sfxName: 'Alert beep',
         stepNo: stepNo,
         total: total,

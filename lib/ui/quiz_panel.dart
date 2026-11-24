@@ -28,6 +28,10 @@ class QuizPanel extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (spec.email != null) ...[
+                _EmailCard(email: spec.email!),
+                const SizedBox(height: 14),
+              ],
               const Lbl('Question', color: AppColors.primarySoft),
               const SizedBox(height: 6),
               Text(spec.question,
@@ -142,9 +146,14 @@ class _CountPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final happens = spec.happens;
+    final custom = spec.majority == null
+        ? null
+        : spec.majority!
+            ? spec.majorityRight
+            : spec.majorityWrong;
     final verdict = happens == null
         ? 'More than half = at least ${spec.needed} of ${spec.alive}.'
-        : switch (spec.side) {
+        : custom ?? switch (spec.side) {
             EventSide.chaos => 'Chaos Event: it happens whatever the answers.',
             _ => spec.majority!
                 ? 'More than half were right: the Event ${happens ? 'happens' : 'is blocked'}.'
@@ -235,6 +244,55 @@ class _CountChip extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+
+/// The email judged in the Phishing Campaign quiz, shown like a mail client.
+class _EmailCard extends StatelessWidget {
+  const _EmailCard({required this.email});
+
+  final PhishEmail email;
+
+  @override
+  Widget build(BuildContext context) {
+    TextStyle meta(Color c) => AppText.body(13, color: c, height: 1.4);
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.bg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.mail_outline_rounded, size: 18, color: AppColors.textSoft),
+              const SizedBox(width: 8),
+              Expanded(child: Text('Inbox', style: AppText.body(13, weight: FontWeight.w700))),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text.rich(TextSpan(children: [
+            TextSpan(text: 'From  ', style: meta(AppColors.muted)),
+            TextSpan(text: email.from, style: meta(AppColors.text)),
+          ])),
+          const SizedBox(height: 2),
+          Text.rich(TextSpan(children: [
+            TextSpan(text: 'Subject  ', style: meta(AppColors.muted)),
+            TextSpan(
+                text: email.subject,
+                style: AppText.body(13, weight: FontWeight.w700, height: 1.4)),
+          ])),
+          const Divider(height: 20, color: AppColors.line),
+          Text(email.body,
+              style: AppText.body(15,
+                  weight: FontWeight.w400, color: AppColors.textSoft, height: 1.5)),
+        ],
       ),
     );
   }

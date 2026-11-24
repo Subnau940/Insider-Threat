@@ -107,6 +107,10 @@ GuideStep _buildDay(GameController c) {
       final lines = [
         for (var i = 0; i < spec.answers.length; i++) '${i + 1}: ${spec.answers[i]}.',
       ].join(' ');
+      final mail = spec.email;
+      final intro = mail == null
+          ? ''
+          : 'Everyone received this email. From: ${mail.from}. Subject: ${mail.subject}. "${mail.body}" ';
       return GuideStep(
         kind: StepKind.quiz,
         kicker: 'Quiz · ${ev.info.title}',
@@ -114,13 +118,13 @@ GuideStep _buildDay(GameController c) {
         sub: '${spec.alive} players answer',
         tag: ev.info.side.label,
         say:
-            '${spec.question} $lines You have ten seconds to think. No talking.',
+            '$intro${spec.question} $lines You have one minute to think. No talking.',
         todo:
-            'Read the question and the 3 answers. When the timer ends, say: "Three... two... one... show your answer!" Every player still in the game shows 1, 2 or 3 fingers at the same time.',
+            'Read the question and the ${spec.answers.length} answers. When the timer ends, say: "Three... two... one... show your answer!" Every player still in the game shows ${spec.answers.length == 2 ? '1 or 2' : '1, 2 or 3'} fingers at the same time.',
         quiz: spec,
         clock: ClockSpec(
           id: 'quiz-${c.night}',
-          seconds: 10,
+          seconds: 60,
           controls: false,
           label: 'Thinking time',
         ),
@@ -151,9 +155,11 @@ GuideStep _buildDay(GameController c) {
         canContinue: spec.correctCount != null,
         primaryLabel: happens == null
             ? 'Enter the right answers'
-            : happens
-                ? '${ev.info.title} happens'
-                : '${ev.info.title} is blocked',
+            : ev == EventCard.phishing
+                ? (spec.majority! ? 'Phishing spotted' : 'Phishing worked')
+                : happens
+                    ? '${ev.info.title} happens'
+                    : '${ev.info.title} is blocked',
         primaryStyle:
             happens == true && ev.info.side == EventSide.red ? PrimaryStyle.red : PrimaryStyle.primary,
         sfxName: 'Glitch',
@@ -169,6 +175,26 @@ GuideStep _buildDay(GameController c) {
       final alive = c.alivePlayers.length;
       final score = '$right of $alive ${right == 1 ? 'player' : 'players'} found the right answer.';
       final happens = c.eventOutcome == EventOutcome.happens;
+      if (ev == EventCard.phishing) {
+        final spotted = c.phishSpotted;
+        return GuideStep(
+          kind: StepKind.eventResult,
+          kicker: 'Quiz result',
+          title: spotted ? 'Phishing spotted' : 'Phishing worked',
+          sub: spotted ? 'Malus for the Red Team' : 'Bonus for the Red Team',
+          tag: info.side.label,
+          say: spotted
+              ? '$score More than half: the phishing campaign was spotted. Malus for the Red Team: their attack fails tonight.'
+              : '$score Not enough: the phishing campaign worked. Bonus for the Red Team: tonight they compromise two machines.',
+          todo: 'Nothing else to do now: the effect happens tonight. Move on to the debate.',
+          banner: banner,
+          primaryLabel: 'Next',
+          sfxName: spotted ? 'Lockdown' : 'Glitch',
+          stepNo: stepNo,
+          total: total,
+          canBack: canBack,
+        );
+      }
       final (say, sub) = switch (info.side) {
         EventSide.blue => happens
             ? ('$score More than half: the Blue Team gets the advantage. ${info.title} happens. ${info.description}',
@@ -215,10 +241,10 @@ GuideStep _buildDay(GameController c) {
           title: current,
           sub: 'Speaker ${i + 1} of ${order.length}',
           say: i == 0
-              ? 'The network is under attack: no free debate. Each machine speaks once, in turn, for 20 seconds. Nobody can interrupt. $current, you have the floor.'
+              ? 'The network is under attack: no free debate. Each machine speaks once, in turn, for one minute. Nobody can interrupt. $current, you have the floor.'
               : '$current, you have the floor.',
           todo:
-              'Starting with the player to the left of the CISO. Tap Next speaker when the 20 seconds are over.',
+              'Starting with the player to the left of the CISO. Tap Next speaker when the minute is over.',
           ddos: DdosSpec(
             current: current,
             index: i,
@@ -229,7 +255,7 @@ GuideStep _buildDay(GameController c) {
           ),
           clock: ClockSpec(
             id: 'ddos-${c.night}-$i',
-            seconds: 20,
+            seconds: 60,
             controls: false,
             label: 'Speaking time',
           ),
@@ -347,6 +373,22 @@ GuideStep _buildDay(GameController c) {
 
 /// The quiz of today's Event, with the answers in their shuffled order.
 QuizSpec _quizSpec(GameController c, EventCard ev, {required bool revealed}) {
+  if (ev == EventCard.phishing) {
+    final mail = phishEmails[c.phishEmail];
+    return QuizSpec(
+      question: 'Is this email legitimate or a phishing attempt?',
+      answers: const ['Legitimate', 'Phishing'],
+      correct: mail.isPhishing ? 1 : 0,
+      explanation: mail.explanation,
+      side: ev.info.side,
+      revealed: revealed,
+      alive: c.alivePlayers.length,
+      correctCount: c.quizCorrect,
+      email: mail,
+      majorityRight: 'More than half were right: malus for the Red Team, their attack fails tonight.',
+      majorityWrong: 'Not enough right answers: bonus for the Red Team, they compromise 2 machines tonight.',
+    );
+  }
   final q = ev.quiz;
   final order = c.quizOrder;
   return QuizSpec(
@@ -389,7 +431,7 @@ GuideStep _buildChain(GameController c) {
       ),
       clock: ClockSpec(
         id: 'dms-${p.id}',
-        seconds: 10,
+        seconds: 60,
         controls: false,
         label: 'Time to point',
       ),

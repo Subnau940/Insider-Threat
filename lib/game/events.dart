@@ -116,11 +116,11 @@ const Map<EventCard, EventInfo> eventInfos = {
     number: 8,
     title: 'Phishing Campaign',
     side: EventSide.chaos,
-    when: 'Tonight + next morning',
+    when: 'Today, effect tonight',
     description:
-        'A malicious email is spreading through the company. Recipients cannot tell whether it is legitimate.',
+        'A suspicious email lands in every inbox. Is it legitimate, or is it phishing?',
     howTo:
-        'Tonight, before the Red Team, the app flips a secret coin and picks 3 online players. They answer with their eyes closed: thumb up to click, thumb down to report. Announce the result in the morning.',
+        'The quiz shows an email. Everyone decides together: legitimate or phishing? Majority right: malus for the Red Team, their attack fails tonight. Majority wrong: bonus for the Red Team, they compromise 2 machines tonight.',
   ),
   EventCard.blackFridayRush: EventInfo(
     number: 9,
@@ -138,7 +138,7 @@ const Map<EventCard, EventInfo> eventInfos = {
     description:
         'The network is flooded by a denial-of-service attack: only one message gets through at a time.',
     howTo:
-        'No free debate. One round, one player at a time, 20 seconds each, starting with the player to the left of the CISO. Nobody can interrupt.',
+        'No free debate. One round, one player at a time, 1 minute each, starting with the player to the left of the CISO. Nobody can interrupt.',
   ),
 };
 
@@ -198,10 +198,10 @@ const Map<EventCard, EventCardFace> eventCardFaces = {
     effect: '**No debate.** Everyone votes immediately, in silence.',
   ),
   EventCard.phishing: EventCardFace(
-    when: 'TONIGHT',
-    flavor: 'Click or report?',
+    when: 'TODAY',
+    flavor: 'Legit or phishing?',
     effect:
-        '3 random players get an email. **Real phishing**: clickers go down, unless someone reported. **Legit email**: reporters cannot vote today.',
+        'Everyone checks the same email. **Majority right**: the Red Team\'s attack **fails** tonight. **Majority wrong**: the Red Team compromises **2 machines** tonight.',
   ),
   EventCard.blackFridayRush: EventCardFace(
     when: 'TODAY',
@@ -211,7 +211,7 @@ const Map<EventCard, EventCardFace> eventCardFaces = {
   EventCard.ddos: EventCardFace(
     when: 'TODAY',
     flavor: 'One message at a time.',
-    effect: 'No free debate. Each player speaks **once, in turn**, 20 seconds max.',
+    effect: 'No free debate. Each player speaks **once, in turn**, 1 minute max.',
   ),
 };
 
@@ -361,3 +361,73 @@ const Map<EventCard, EventQuiz> eventQuizzes = {
 extension EventQuizX on EventCard {
   EventQuiz get quiz => eventQuizzes[this]!;
 }
+
+
+/// Emails used by the Phishing Campaign quiz. One is picked at random each
+/// time the Event is drawn; players decide whether it is legitimate.
+class PhishEmail {
+  const PhishEmail({
+    required this.from,
+    required this.subject,
+    required this.body,
+    required this.isPhishing,
+    required this.explanation,
+  });
+
+  final String from;
+  final String subject;
+  final String body;
+  final bool isPhishing;
+  final String explanation;
+}
+
+const List<PhishEmail> phishEmails = [
+  PhishEmail(
+    from: 'it-support@corp-lan-security.co',
+    subject: 'URGENT: your password expires in 1 hour',
+    body: 'Your account will be locked today. Click here and enter your password to keep access.',
+    isPhishing: true,
+    explanation:
+        'Phishing: the sender domain is not the company one, the tone is urgent, and IT never asks for your password.',
+  ),
+  PhishEmail(
+    from: 'ceo.office@gmail.com',
+    subject: 'Quick favour, confidential',
+    body: 'I am in a meeting. Buy 5 gift cards of 100 euros and send me the codes. Keep this between us.',
+    isPhishing: true,
+    explanation:
+        'Phishing (CEO fraud): a personal address, secrecy, pressure and gift cards. Always check by phone.',
+  ),
+  PhishEmail(
+    from: 'delivery@parcel-track.info',
+    subject: 'Your parcel is on hold',
+    body: 'Delivery failed. Pay 1.99 euros of fees within 24 hours on our website or your parcel will be returned.',
+    isPhishing: true,
+    explanation:
+        'Phishing: an unknown domain, a small payment to collect your card details, and a deadline.',
+  ),
+  PhishEmail(
+    from: 'it-support@corp-lan.com',
+    subject: 'Planned maintenance on Saturday',
+    body: 'The mail server will be updated on Saturday from 8 to 10 am. No action is needed on your side.',
+    isPhishing: false,
+    explanation:
+        'Legitimate: the company domain, no link, no urgency, and nothing is asked from you.',
+  ),
+  PhishEmail(
+    from: 'hr@corp-lan.com',
+    subject: 'Team lunch on Friday',
+    body: 'The team lunch is on Friday at 12:30 in the cafeteria. Reply to this email if you have food allergies.',
+    isPhishing: false,
+    explanation:
+        'Legitimate: an internal sender, a normal request, no link and no personal data asked for.',
+  ),
+  PhishEmail(
+    from: 'security@corp-lan.com',
+    subject: 'Reminder: report suspicious emails',
+    body: 'If an email looks strange, do not click. Use the "Report phishing" button in your mailbox.',
+    isPhishing: false,
+    explanation:
+        'Legitimate: the security team from the company domain, giving advice without any link to click.',
+  ),
+];

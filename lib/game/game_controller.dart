@@ -75,9 +75,14 @@ class GameController extends ChangeNotifier {
   bool kill = false;
   EventCard? nightEvent;
   int? honeypotId;
-  bool phishReal = false;
-  List<int> phishTargets = [];
-  final Map<int, bool> phishClicked = {};
+
+  /// Phishing Campaign: did the majority judge the email correctly? Decided
+  /// by the day quiz, used tonight: true = malus for the Red Team (attack
+  /// fails), false = bonus (two victims).
+  bool phishSpotted = false;
+
+  /// Phishing Campaign: index of today's email in [phishEmails].
+  int phishEmail = 0;
 
   // --- day state ---------------------------------------------------------------
   /// The Event drawn today. It only takes effect once the quiz says so: see
@@ -258,11 +263,6 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void answerPhish(int id, {required bool clicked}) {
-    phishClicked[id] = clicked;
-    notifyListeners();
-  }
-
   void primary() {
     switch (phase) {
       case GamePhase.end:
@@ -350,18 +350,11 @@ class GameController extends ChangeNotifier {
     todayEvent = null;
     _clearQuiz();
     honeypotId = null;
-    phishTargets = [];
-    phishClicked.clear();
     if (nightEvent == EventCard.honeypot) {
       final candidates = alivePlayers.where((p) => p.team == Team.blue);
       if (candidates.isNotEmpty) {
         honeypotId = candidates.elementAt(rng.nextInt(candidates.length)).id;
       }
-    }
-    if (nightEvent == EventCard.phishing) {
-      phishReal = rng.nextBool();
-      final pool = alivePlayers..shuffle(rng);
-      phishTargets = pool.take(3).map((p) => p.id).toList();
     }
   }
 
@@ -400,30 +393,19 @@ class GameController extends ChangeNotifier {
       if (t != null) deaths.add(t);
     }
 
-    var banned = <int>{};
-    if (ev == EventCard.phishing) {
-      final clickers =
-          phishTargets.where((id) => phishClicked[id] == true).toList();
-      final reporters =
-          phishTargets.where((id) => phishClicked[id] == false).toList();
-      if (phishReal) {
-        if (reporters.isNotEmpty) {
-          notes.add('Phishing reported and blocked.');
-        } else if (clickers.isNotEmpty) {
-          deaths.addAll(clickers);
-          notes.add('Phishing campaign: every machine that clicked is compromised.');
-        }
-      } else if (reporters.isNotEmpty) {
-        banned = reporters.toSet();
-        final names = _join(reporters.map((i) => players[i].name).toList());
-        notes.add(
-            'False alarm: the email was legitimate. $names reported it by mistake and cannot vote today.');
-      }
+    // Phishing worked: the Red Team took a second victim with the stolen
+    // credentials. That one cannot be restored.
+    if (ev == EventCard.phishing && !phishSpotted) {
+      final second = _sel['red']?.elementAtOrNull(1);
+      if (second != null) deaths.add(second);
+    }
+    if (ev == EventCard.phishing && phishSpotted) {
+      notes.add('The phishing campaign was spotted: the Red Team\'s attack failed.');
     }
 
     morningIds = _eliminate(deaths);
     morningNotes = notes;
-    voteBanned = banned;
+    voteBanned = {};
 
     // New day.
     phase = GamePhase.day;
@@ -621,6 +603,8 @@ class GameController extends ChangeNotifier {
     quizCorrect = null;
     quizOrder = [0, 1, 2]..shuffle(rng);
     _quizSkipped = false;
+    phishSpotted = false;
+    if (card == EventCard.phishing) phishEmail = rng.nextInt(phishEmails.length);
     _resetEventEffects();
   }
 
@@ -630,6 +614,7 @@ class GameController extends ChangeNotifier {
     final card = todayEvent;
     if (card == null) return;
     final majority = (quizCorrect ?? 0) * 2 > alivePlayers.length;
+    if (card == EventCard.phishing) phishSpotted = majority;
     final happens = switch (card.info.side) {
       EventSide.blue => majority,
       EventSide.red => !majority,
