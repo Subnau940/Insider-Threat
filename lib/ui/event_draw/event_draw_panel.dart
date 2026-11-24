@@ -404,11 +404,11 @@ class _EventDrawPanelState extends State<EventDrawPanel>
                   // RGB-split glitch slices
                   GlitchLayer(
                       slice: _pink,
-                      tint: AppColors.pink,
+                      tint: AppColors.teamRed,
                       child: glitchSource),
                   GlitchLayer(
                       slice: _cyan,
-                      tint: AppColors.blue,
+                      tint: AppColors.teamBlue,
                       child: glitchSource),
                   // white flash (CRT brightness)
                   if (flash > 0)

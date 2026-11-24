@@ -81,7 +81,7 @@ class _AppRootState extends State<AppRoot> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Quit', style: TextStyle(color: AppColors.pink)),
+            child: const Text('Quit', style: TextStyle(color: AppColors.danger)),
           ),
         ],
       ),

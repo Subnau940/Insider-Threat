@@ -21,7 +21,7 @@ class NeonBackground extends StatelessWidget {
       Mood.night => AppColors.primary.withValues(alpha: .11),
       Mood.day => AppColors.primary.withValues(alpha: .18),
       Mood.endBlue => AppColors.primary.withValues(alpha: .22),
-      Mood.endRed => AppColors.pink.withValues(alpha: .28),
+      Mood.endRed => AppColors.teamRed.withValues(alpha: .28),
     };
     return Scaffold(
       body: DecoratedBox(
@@ -31,8 +31,8 @@ class NeonBackground extends StatelessWidget {
             center: const Alignment(1, 1.05),
             radius: .9,
             colors: [
-              AppColors.pink.withValues(alpha: .10),
-              AppColors.pink.withValues(alpha: 0),
+              AppColors.secondary.withValues(alpha: .10),
+              AppColors.secondary.withValues(alpha: 0),
             ],
           ),
         ),
@@ -75,20 +75,16 @@ class Lbl extends StatelessWidget {
 }
 
 class TagChip extends StatelessWidget {
-  const TagChip(this.text, {super.key, this.danger = false, this.pink = false});
+  const TagChip(this.text, {super.key, this.danger = false});
 
   final String text;
 
-  /// Warning tag. Pink, like [pink].
+  /// Warning tag, in the danger colour instead of the secondary one.
   final bool danger;
-
-  /// Pink instead of the default blue.
-  final bool pink;
 
   @override
   Widget build(BuildContext context) {
-    final isPink = danger || pink;
-    final base = isPink ? AppColors.pink : AppColors.blue;
+    final base = danger ? AppColors.danger : AppColors.secondary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
       decoration: BoxDecoration(
@@ -100,7 +96,7 @@ class TagChip extends StatelessWidget {
         style: AppText.body(
           14,
           weight: FontWeight.w600,
-          color: isPink ? AppColors.pinkSoft : AppColors.blueSoft,
+          color: danger ? AppColors.dangerSoft : AppColors.secondarySoft,
         ),
       ),
     );
@@ -157,7 +153,7 @@ class NeonButton extends StatelessWidget {
         ? null
         : switch (variant) {
             NeonVariant.primary => AppColors.primaryGradient,
-            NeonVariant.red => AppColors.pinkGradient,
+            NeonVariant.red => AppColors.dangerGradient,
             NeonVariant.ghost => null,
           };
     final bg = !enabled
@@ -303,12 +299,12 @@ class _SayCardState extends State<SayCard> {
           colors: [AppColors.surfaceHigh, AppColors.surface],
         ),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.blue.withValues(alpha: .4)),
+        border: Border.all(color: AppColors.secondary.withValues(alpha: .4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Lbl('Say', color: AppColors.blueSoft),
+          const Lbl('Say', color: AppColors.secondarySoft),
           const SizedBox(height: 10),
           Semantics(
             label: widget.text,
@@ -346,8 +342,8 @@ class PickerGrid extends StatelessWidget {
   final VoidCallback onNone;
 
   Color get _accent => switch (spec.style) {
-        PickStyle.blue => AppColors.blue,
-        PickStyle.red => AppColors.pink,
+        PickStyle.blue => AppColors.teamBlue,
+        PickStyle.red => AppColors.teamRed,
         PickStyle.violet => AppColors.primary,
       };
 
@@ -522,10 +518,10 @@ class ToolsRow extends StatelessWidget {
   Widget build(BuildContext context) => Row(
         children: [
           _tool('Backup restore', spec.restoreSub, spec.restoreOn,
-              spec.restoreEnabled, AppColors.blue, onRestore),
+              spec.restoreEnabled, AppColors.teamBlue, onRestore),
           const SizedBox(width: 8),
           _tool('Kill process', spec.killSub, spec.killOn, spec.killEnabled,
-              AppColors.pink, onKill),
+              AppColors.danger, onKill),
         ],
       );
 }
@@ -577,7 +573,7 @@ class _CountdownClockState extends State<CountdownClock> {
             style: AppText.mono(
               widget.spec.controls ? 60 : 44,
               weight: FontWeight.w700,
-              color: over ? AppColors.pink : AppColors.text,
+              color: over ? AppColors.danger : AppColors.text,
               height: 1,
             ).copyWith(
               fontFeatures: const [FontFeature.tabularFigures()],
@@ -596,7 +592,7 @@ class _CountdownClockState extends State<CountdownClock> {
               value: _max == 0 ? 0 : _left / _max,
               minHeight: 6,
               backgroundColor: AppColors.line,
-              color: over ? AppColors.pink : AppColors.primary,
+              color: over ? AppColors.danger : AppColors.primary,
             ),
           ),
           if (widget.spec.controls) ...[
@@ -648,9 +644,9 @@ class DownList extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.pink.withValues(alpha: .08),
+        color: AppColors.danger.withValues(alpha: .08),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.pink.withValues(alpha: .45)),
+        border: Border.all(color: AppColors.danger.withValues(alpha: .45)),
       ),
       child: entries.isEmpty
           ? Row(
@@ -762,13 +758,13 @@ class BannerCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.pink.withValues(alpha: .10),
+          color: AppColors.danger.withValues(alpha: .10),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.pink.withValues(alpha: .4)),
+          border: Border.all(color: AppColors.danger.withValues(alpha: .4)),
         ),
         child: Text(
           text,
-          style: AppText.body(14, weight: FontWeight.w600, color: AppColors.pinkSoft),
+          style: AppText.body(14, weight: FontWeight.w600, color: AppColors.dangerSoft),
         ),
       );
 }
@@ -800,7 +796,7 @@ class PhishAnswers extends StatelessWidget {
                     height: 44,
                     child: _Tile(
                       selected: r.clicked == true,
-                      accent: AppColors.pink,
+                      accent: AppColors.teamRed,
                       onTap: () => onAnswer(r.id, true),
                       child: Center(
                         child: Text('Click', style: AppText.body(14)),
@@ -813,7 +809,7 @@ class PhishAnswers extends StatelessWidget {
                     height: 44,
                     child: _Tile(
                       selected: r.clicked == false,
-                      accent: AppColors.blue,
+                      accent: AppColors.teamBlue,
                       onTap: () => onAnswer(r.id, false),
                       child: Center(
                         child: Text('Report', style: AppText.body(14)),
