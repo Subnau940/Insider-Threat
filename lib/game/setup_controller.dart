@@ -41,7 +41,7 @@ class ScanResult {
 
 class SetupController extends ChangeNotifier {
   int count = 8;
-  bool expert = false;
+  bool expert = true;
   final List<String> names = List.filled(maxPlayers, '');
   final List<RoleId?> roles = List.filled(maxPlayers, null);
 

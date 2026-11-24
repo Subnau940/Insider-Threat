@@ -137,27 +137,7 @@ class _SetupScreenState extends State<SetupScreen> {
                       'Recommended: ${rec.red} Red${rec.purple > 0 ? ' · ${rec.purple} Purple' : ''} · ${rec.special.length} special · ${rec.defenders} Defenders',
                       style: AppText.body(14, color: AppColors.muted, height: 1.5),
                     ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text('Expert mode (Event cards)',
-                              style: AppText.body(15, weight: FontWeight.w600)),
-                        ),
-                        Switch(
-                          value: s.expert,
-                          onChanged: s.setExpert,
-                          thumbColor:
-                              const WidgetStatePropertyAll(AppColors.text),
-                          trackColor: WidgetStateProperty.resolveWith(
-                            (st) => st.contains(WidgetState.selected)
-                                ? AppColors.primary
-                                : AppColors.line,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 10),
                     NeonButton(
                       label: 'Scan the cards',
                       height: 50,
@@ -204,6 +184,26 @@ class _SetupScreenState extends State<SetupScreen> {
                         onRole: () => _pickRole(i),
                         onScan: () => _openScan(i),
                       ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text('Expert mode (Event cards)',
+                              style: AppText.body(15, weight: FontWeight.w600)),
+                        ),
+                        Switch(
+                          value: s.expert,
+                          onChanged: s.setExpert,
+                          thumbColor:
+                              const WidgetStatePropertyAll(AppColors.text),
+                          trackColor: WidgetStateProperty.resolveWith(
+                            (st) => st.contains(WidgetState.selected)
+                                ? AppColors.primary
+                                : AppColors.line,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
