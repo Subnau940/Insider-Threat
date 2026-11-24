@@ -70,6 +70,9 @@ flutter:
     - family: Satoshi
       fonts:
         - asset: assets/fonts/Satoshi-Variable.ttf
+    - family: Schabo
+      fonts:
+        - asset: assets/fonts/SCHABO-Condensed.otf
 
   # To add assets to your application, add an assets section, like this:
   # assets:

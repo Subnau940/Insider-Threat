@@ -74,10 +74,10 @@ class _SetupScreenState extends State<SetupScreen> {
                   minLeadingWidth: 12,
                   title: Text(r.info.name,
                       style: AppText.body(16, weight: FontWeight.w600)),
-                  subtitle: Text(r.info.character, style: AppText.mono(11)),
+                  subtitle: Text(r.info.character, style: AppText.body(13, color: AppColors.muted)),
                   trailing: Text(
                     '${counts[r] ?? 0}/${target[r] ?? 0}',
-                    style: AppText.mono(12),
+                    style: AppText.body(13, color: AppColors.muted),
                   ),
                   onTap: () => Navigator.pop(ctx, r),
                 ),
@@ -134,7 +134,7 @@ class _SetupScreenState extends State<SetupScreen> {
                     const SizedBox(height: 10),
                     Text(
                       'Recommended: ${rec.red} Red${rec.purple > 0 ? ' · ${rec.purple} Purple' : ''} · ${rec.special.length} special · ${rec.defenders} Defenders',
-                      style: AppText.mono(12, height: 1.5),
+                      style: AppText.body(14, color: AppColors.muted, height: 1.5),
                     ),
                     const SizedBox(height: 6),
                     Row(
@@ -243,7 +243,7 @@ class _CountRow extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Text('Players', style: AppText.ui(16, weight: FontWeight.w600)),
+              child: Text('Players', style: AppText.body(16, weight: FontWeight.w700)),
             ),
             IconButton(
               tooltip: 'Remove a player',

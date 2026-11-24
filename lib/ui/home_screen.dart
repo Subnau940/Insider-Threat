@@ -41,7 +41,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             SizedBox(height: compact ? 16 : 24),
-            const TagChip('Narrator companion'),
+            const TagChip('Narrator companion', pink: true),
             const Spacer(),
             NeonButton(label: 'New game', onPressed: onNewGame),
             const SizedBox(height: 12),
@@ -53,7 +53,7 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 14),
             const SizedBox(
               width: double.infinity,
-              child: Lbl('6–14 players + 1 Narrator · 20–40 min',
+              child: Lbl('6-14 players + 1 Narrator · 20-40 min',
                   align: TextAlign.center),
             ),
           ],

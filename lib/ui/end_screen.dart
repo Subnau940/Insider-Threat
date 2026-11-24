@@ -147,7 +147,7 @@ class _RoleCell extends StatelessWidget {
                     player.role.info.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppText.mono(11, weight: FontWeight.w400),
+                    style: AppText.body(13, weight: FontWeight.w400, color: AppColors.muted),
                   ),
                 ],
               ),
