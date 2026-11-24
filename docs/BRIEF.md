@@ -21,6 +21,7 @@ Jeu de déduction sociale inspiré des Loups-garous de Thiercelieux, transposé 
   - `card_code.dart` : format des QR des cartes, `INSIDERTHREAT:1:<role>:<nn>`.
 - `lib/ui/` :
   - `home_screen` ;
+  - `rules_screen` : bouton Rules de l'accueil, avec un sélecteur Game rules / Roles. Les règles reprennent `Insider-Threat-Rules-EN.pdf` (Events + quiz, sans les questions). Les rôles affichent le surnom, l'équivalent Loup-Garou (`RoleInfo.werewolf`) et le CISO ;
   - `setup_screen`, avec le bouton « Deal at random » pour tester sans cartes ;
   - `scan_screen` (mobile_scanner) ;
   - `guide_screen` (toutes les étapes de nuit et de jour) ;
