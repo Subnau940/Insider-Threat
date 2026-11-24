@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../game/events.dart';
@@ -673,8 +675,8 @@ class _FlipButton extends StatelessWidget {
       );
 }
 
-/// A role card that shows its character side, and back, with no turning
-/// animation. Tap anywhere on it (or its arrow) to switch.
+/// A role card that turns over to its character side, and back, with a
+/// short, light flip. Tap anywhere on it (or its arrow) to turn it.
 class _FlipRoleCard extends StatefulWidget {
   const _FlipRoleCard({required this.info});
 
@@ -684,10 +686,30 @@ class _FlipRoleCard extends StatefulWidget {
   State<_FlipRoleCard> createState() => _FlipRoleCardState();
 }
 
-class _FlipRoleCardState extends State<_FlipRoleCard> {
-  bool _showBack = false;
+class _FlipRoleCardState extends State<_FlipRoleCard> with SingleTickerProviderStateMixin {
+  late final AnimationController _flip = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 340),
+  );
 
-  void _toggle() => setState(() => _showBack = !_showBack);
+  @override
+  void dispose() {
+    _flip.dispose();
+    super.dispose();
+  }
+
+  void _toggle() {
+    // Showing the front, or on its way back to it: turn to the character.
+    final toBack = _flip.status == AnimationStatus.dismissed ||
+        _flip.status == AnimationStatus.reverse;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _flip.value = toBack ? 1 : 0;
+    } else if (toBack) {
+      _flip.forward();
+    } else {
+      _flip.reverse();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -703,26 +725,48 @@ class _FlipRoleCardState extends State<_FlipRoleCard> {
     );
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      // Tap anywhere on the card to switch sides.
+      // Tap anywhere on the card to turn it over.
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: _toggle,
         child: ConstrainedBox(
           // Tall enough for the full-length character.
           constraints: const BoxConstraints(minHeight: 420),
-          // Both sides keep the same size: the front sets it.
-          child: Stack(
-            fit: StackFit.passthrough,
-            children: [
-              Visibility(
-                visible: !_showBack,
-                maintainSize: true,
-                maintainAnimation: true,
-                maintainState: true,
-                child: front,
-              ),
-              if (_showBack) Positioned.fill(child: back),
-            ],
+          child: AnimatedBuilder(
+            animation: _flip,
+            builder: (context, _) {
+              final t = Curves.easeInOut.transform(_flip.value);
+              final showBack = t >= .5;
+              // Turns towards the left. Past halfway the back side is shown,
+              // mirrored back so it reads the right way round.
+              return Transform(
+                alignment: Alignment.center,
+                transform: Matrix4.identity()
+                  ..setEntry(3, 2, .001)
+                  ..rotateY(-pi * t),
+                // Both sides keep the same size: the front sets it.
+                child: Stack(
+                  fit: StackFit.passthrough,
+                  children: [
+                    Visibility(
+                      visible: !showBack,
+                      maintainSize: true,
+                      maintainAnimation: true,
+                      maintainState: true,
+                      child: front,
+                    ),
+                    if (showBack)
+                      Positioned.fill(
+                        child: Transform(
+                          alignment: Alignment.center,
+                          transform: Matrix4.rotationY(pi),
+                          child: back,
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
           ),
         ),
       ),
