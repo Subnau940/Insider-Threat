@@ -4,7 +4,6 @@ import '../game/events.dart';
 import '../game/models.dart';
 import '../theme/app_theme.dart';
 import 'role_card_face.dart';
-import 'tilt_card.dart';
 import 'widgets.dart';
 
 /// The two views of the Rules screen.
@@ -539,7 +538,7 @@ class _RolesView extends StatelessWidget {
               'the card. Here is every role, its power and its match in the original Werewolf game.'),
         ),
         for (final id in roleDisplayOrder) _FlipRoleCard(info: id.info),
-        const Tilt3D(child: _CisoTile()),
+        const _CisoTile(),
       ],
     );
   }
@@ -704,28 +703,26 @@ class _FlipRoleCardState extends State<_FlipRoleCard> {
     );
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      // Tap anywhere on the card to switch sides; touch and slide to tilt it.
+      // Tap anywhere on the card to switch sides.
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: _toggle,
-        child: Tilt3D(
-          child: ConstrainedBox(
-            // Tall enough for the full-length character.
-            constraints: const BoxConstraints(minHeight: 420),
-            // Both sides keep the same size: the front sets it.
-            child: Stack(
-              fit: StackFit.passthrough,
-              children: [
-                Visibility(
-                  visible: !_showBack,
-                  maintainSize: true,
-                  maintainAnimation: true,
-                  maintainState: true,
-                  child: front,
-                ),
-                if (_showBack) Positioned.fill(child: back),
-              ],
-            ),
+        child: ConstrainedBox(
+          // Tall enough for the full-length character.
+          constraints: const BoxConstraints(minHeight: 420),
+          // Both sides keep the same size: the front sets it.
+          child: Stack(
+            fit: StackFit.passthrough,
+            children: [
+              Visibility(
+                visible: !_showBack,
+                maintainSize: true,
+                maintainAnimation: true,
+                maintainState: true,
+                child: front,
+              ),
+              if (_showBack) Positioned.fill(child: back),
+            ],
           ),
         ),
       ),
