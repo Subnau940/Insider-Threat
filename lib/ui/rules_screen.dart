@@ -265,8 +265,8 @@ class _Badge extends StatelessWidget {
 }
 
 Color sideColor(EventSide s) => switch (s) {
-      EventSide.blue => AppColors.blue,
-      EventSide.red => AppColors.pink,
+      EventSide.blue => AppColors.teamBlue,
+      EventSide.red => AppColors.teamRed,
       EventSide.chaos => AppColors.primary,
     };
 

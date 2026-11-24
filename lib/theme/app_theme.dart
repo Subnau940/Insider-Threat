@@ -44,6 +44,7 @@ abstract final class AppColors {
   // Team colours: data, not UI chrome. Keep them for team identity only.
   static const teamRed = Signal.c400;
   static const teamBlue = Picton.c400;
+  static const teamPurple = Violet.c400;
 
   /// Faint grid lines on the Event card.
   static const grid = Color(0x17A5A5A1);
@@ -64,11 +65,10 @@ abstract final class AppColors {
     colors: [Picton.c300, Picton.c400],
   );
 
-  /// Purple has no ramp of its own: the lone wildcard takes the brand lime.
   static Color team(Team t) => switch (t) {
         Team.red => teamRed,
         Team.blue => teamBlue,
-        Team.purple => primary,
+        Team.purple => teamPurple,
       };
 }
 

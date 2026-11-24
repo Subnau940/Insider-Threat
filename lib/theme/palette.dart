@@ -74,3 +74,8 @@ abstract final class Signal {
   static const c400 = Color(0xFFFF4D6A);
   static const c500 = Color(0xFFE63956);
 }
+
+/// Violet. Not part of the chosen ramps: only the Purple Team uses it.
+abstract final class Violet {
+  static const c400 = Color(0xFFA97BFF);
+}
