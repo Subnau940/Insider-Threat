@@ -149,7 +149,7 @@ class _ScanScreenState extends State<ScanScreen> {
                     TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: Text('‹ Setup',
-                          style: AppText.ui(15, color: AppColors.muted)),
+                          style: AppText.body(15, color: AppColors.muted)),
                     ),
                     const Spacer(),
                     TagChip('${_setup.assigned} / ${_setup.count} roles'),
@@ -177,7 +177,7 @@ class _ScanScreenState extends State<ScanScreen> {
                         ],
                         Text(
                           role == null ? 'No role yet' : 'Now: ${role.info.name}',
-                          style: AppText.ui(15, color: AppColors.textSoft),
+                          style: AppText.body(15, color: AppColors.textSoft),
                         ),
                       ],
                     ),
@@ -258,7 +258,7 @@ class _Viewfinder extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: const Color(0xFF0B0E2A),
+            color: AppColors.bg,
             border: Border.all(color: AppColors.line),
             borderRadius: BorderRadius.circular(20),
           ),
@@ -294,7 +294,7 @@ class _Corners extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const side = BorderSide(color: Color(0xFF7F9DFF), width: 3);
+    const side = BorderSide(color: AppColors.blueSoft, width: 3);
     const r = Radius.circular(10);
     Widget corner(Alignment a, Border b, BorderRadius br) => Align(
           alignment: a,
@@ -344,7 +344,7 @@ class _CameraError extends StatelessWidget {
             const SizedBox(height: 10),
             Text(text,
                 textAlign: TextAlign.center,
-                style: AppText.ui(14, color: AppColors.textSoft, height: 1.4)),
+                style: AppText.body(14, color: AppColors.textSoft, height: 1.4)),
           ],
         ),
       ),
@@ -362,8 +362,8 @@ class _Feedback extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = switch (tone) {
       _Tone.info => AppColors.blue,
-      _Tone.ok => AppColors.violet,
-      _Tone.error => AppColors.red,
+      _Tone.ok => AppColors.primary,
+      _Tone.error => AppColors.pink,
     };
     return Semantics(
       liveRegion: true,
@@ -377,9 +377,9 @@ class _Feedback extends StatelessWidget {
         ),
         child: Text(
           text,
-          style: AppText.ui(15,
+          style: AppText.body(15,
               weight: FontWeight.w600,
-              color: tone == _Tone.error ? AppColors.redSoft : AppColors.text),
+              color: tone == _Tone.error ? AppColors.pinkSoft : AppColors.text),
         ),
       ),
     );
@@ -413,10 +413,10 @@ class _SeatChip extends StatelessWidget {
         child: Ink(
           decoration: BoxDecoration(
             color: current
-                ? AppColors.violet.withValues(alpha: .18)
+                ? AppColors.primary.withValues(alpha: .18)
                 : AppColors.surface,
             borderRadius: radius,
-            border: Border.all(color: current ? AppColors.violet : AppColors.line),
+            border: Border.all(color: current ? AppColors.primary : AppColors.line),
           ),
           child: InkWell(
             borderRadius: radius,
@@ -440,7 +440,7 @@ class _SeatChip extends StatelessWidget {
                           name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppText.ui(14, weight: FontWeight.w600),
+                          style: AppText.body(14, weight: FontWeight.w600),
                         ),
                       ),
                       if (scanned) ...[

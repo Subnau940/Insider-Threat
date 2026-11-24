@@ -29,7 +29,7 @@ void main() {
     addTearDown(t.view.reset);
 
     await t.pumpWidget(const InsiderThreatApp());
-    expect(find.text('INSIDER'), findsOneWidget);
+    expect(find.bySemanticsLabel('Insider Threat'), findsOneWidget);
 
     await t.tap(find.text('NEW GAME'));
     await settle(t);

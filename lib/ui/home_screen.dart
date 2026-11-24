@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../game/models.dart';
 import '../theme/app_theme.dart';
@@ -11,45 +12,35 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Small phones get tighter spacing so everything still fits.
+    final compact = MediaQuery.sizeOf(context).height < 700;
     return NeonBackground(
       mood: Mood.night,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 56, 20, 24),
+        padding: EdgeInsets.fromLTRB(20, compact ? 32 : 96, 20, 24),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('INSIDER',
-                      style: AppText.ui(70, weight: FontWeight.w700, height: .96)),
-                  ShaderMask(
-                    blendMode: BlendMode.srcIn,
-                    shaderCallback: (r) => const LinearGradient(
-                      colors: [AppColors.red, Color(0xFFB26BFF)],
-                    ).createShader(r),
-                    child: Text('THREAT',
-                        style:
-                            AppText.ui(70, weight: FontWeight.w700, height: .96)),
-                  ),
-                ],
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 300),
+              child: SvgPicture.asset(
+                'assets/brand/logo_typo.svg',
+                semanticsLabel: 'Insider Threat',
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: compact ? 24 : 44),
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 300),
               child: Text(
                 'A social deduction game on a compromised network.',
-                style: AppText.ui(16,
+                textAlign: TextAlign.center,
+                style: AppText.body(16,
                     weight: FontWeight.w400,
                     color: AppColors.textSoft,
                     height: 1.5),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: compact ? 16 : 24),
             const TagChip('Narrator companion'),
             const Spacer(),
             NeonButton(label: 'New game', onPressed: onNewGame),
@@ -62,7 +53,7 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 14),
             const SizedBox(
               width: double.infinity,
-              child: Lbl('8–18 players + 1 Narrator · 30–60 min',
+              child: Lbl('6–14 players + 1 Narrator · 20–40 min',
                   align: TextAlign.center),
             ),
           ],
@@ -108,7 +99,7 @@ void showRolesSheet(BuildContext context) {
                   ),
                   const SizedBox(height: 8),
                   Text(id.info.power,
-                      style: AppText.ui(14,
+                      style: AppText.body(14,
                           weight: FontWeight.w400,
                           color: AppColors.textSoft,
                           height: 1.45)),

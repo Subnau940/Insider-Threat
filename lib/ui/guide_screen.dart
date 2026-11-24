@@ -122,7 +122,7 @@ class _StepBody extends StatelessWidget {
             children: [
               if (step.team != null) TeamDot(step.team!),
               if (step.sub.isNotEmpty)
-                Text(step.sub, style: AppText.ui(15, color: AppColors.textSoft)),
+                Text(step.sub, style: AppText.body(15, color: AppColors.textSoft)),
               if (step.tag != null) TagChip(step.tag!, danger: true),
             ],
           ),
@@ -148,7 +148,7 @@ class _StepBody extends StatelessWidget {
             TextSpan(text: step.todo),
           ],
         ),
-        style: AppText.ui(14,
+        style: AppText.body(14,
             weight: FontWeight.w400, color: AppColors.muted, height: 1.5),
       ),
       if (step.secret != null) SecretCard(text: step.secret!),
@@ -202,7 +202,7 @@ class _SoundPlaceholder extends StatelessWidget {
               name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppText.ui(13, color: AppColors.muted),
+              style: AppText.body(13, color: AppColors.muted),
             ),
           ),
           const Lbl('Audio coming soon'),

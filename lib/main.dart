@@ -73,7 +73,7 @@ class _AppRootState extends State<AppRoot> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text('Quit this game?', style: AppText.ui(20, weight: FontWeight.w700)),
-        content: Text('The current game will be lost.', style: AppText.ui(15)),
+        content: Text('The current game will be lost.', style: AppText.body(15)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -81,7 +81,7 @@ class _AppRootState extends State<AppRoot> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Quit', style: TextStyle(color: AppColors.red)),
+            child: const Text('Quit', style: TextStyle(color: AppColors.pink)),
           ),
         ],
       ),

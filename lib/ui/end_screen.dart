@@ -71,11 +71,9 @@ class EndScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 ShaderMask(
                   blendMode: BlendMode.srcIn,
-                  shaderCallback: (r) => (blueish
-                          ? const LinearGradient(
-                              colors: [Color(0xFF7FA3FF), Color(0xFFB26BFF)])
-                          : AppColors.redGradient)
-                      .createShader(r),
+                  shaderCallback: (r) =>
+                      (blueish ? AppColors.blueGradient : AppColors.pinkGradient)
+                          .createShader(r),
                   child: Text('$line1\n$line2',
                       style: AppText.ui(46, weight: FontWeight.w700, height: 1)),
                 ),
@@ -136,7 +134,7 @@ class _RoleCell extends StatelessWidget {
                     player.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppText.ui(
+                    style: AppText.body(
                       15,
                       weight: FontWeight.w600,
                       color: player.alive ? AppColors.text : AppColors.muted,

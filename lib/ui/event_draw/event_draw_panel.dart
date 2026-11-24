@@ -315,7 +315,7 @@ class _EventDrawPanelState extends State<EventDrawPanel>
                     onPressed: _shown && !_busy ? _play : null,
                     icon: const Icon(Icons.replay, size: 16, color: AppColors.muted),
                     label: Text('Replay the draw',
-                        style: AppText.ui(13, color: AppColors.muted)),
+                        style: AppText.body(13, color: AppColors.muted)),
                   ),
                 ),
               ),
@@ -404,11 +404,11 @@ class _EventDrawPanelState extends State<EventDrawPanel>
                   // RGB-split glitch slices
                   GlitchLayer(
                       slice: _pink,
-                      tint: const Color(0xFFFF2E88),
+                      tint: AppColors.pink,
                       child: glitchSource),
                   GlitchLayer(
                       slice: _cyan,
-                      tint: const Color(0xFF2BD1FF),
+                      tint: AppColors.blue,
                       child: glitchSource),
                   // white flash (CRT brightness)
                   if (flash > 0)

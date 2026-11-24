@@ -18,19 +18,22 @@ class NeonBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final glow = switch (mood) {
-      Mood.night => AppColors.blue.withValues(alpha: .24),
-      Mood.day => AppColors.violet.withValues(alpha: .30),
-      Mood.endBlue => AppColors.blue.withValues(alpha: .34),
-      Mood.endRed => AppColors.red.withValues(alpha: .32),
+      Mood.night => AppColors.primary.withValues(alpha: .11),
+      Mood.day => AppColors.primary.withValues(alpha: .18),
+      Mood.endBlue => AppColors.primary.withValues(alpha: .22),
+      Mood.endRed => AppColors.pink.withValues(alpha: .28),
     };
     return Scaffold(
       body: DecoratedBox(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.bg,
           gradient: RadialGradient(
-            center: Alignment(1, 1.05),
+            center: const Alignment(1, 1.05),
             radius: .9,
-            colors: [Color(0x1FFF4D6A), Color(0x00FF4D6A)],
+            colors: [
+              AppColors.pink.withValues(alpha: .10),
+              AppColors.pink.withValues(alpha: 0),
+            ],
           ),
         ),
         child: AnimatedContainer(
@@ -79,7 +82,7 @@ class TagChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final base = danger ? AppColors.red : AppColors.blue;
+    final base = danger ? AppColors.pink : AppColors.blue;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
       decoration: BoxDecoration(
@@ -90,7 +93,7 @@ class TagChip extends StatelessWidget {
         text.toUpperCase(),
         style: AppText.mono(
           danger ? 10 : 11,
-          color: danger ? AppColors.redSoft : const Color(0xFFB9CCFF),
+          color: danger ? AppColors.pinkSoft : AppColors.blueSoft,
           spacing: 1.1,
         ),
       ),
@@ -148,7 +151,7 @@ class NeonButton extends StatelessWidget {
         ? null
         : switch (variant) {
             NeonVariant.primary => AppColors.primaryGradient,
-            NeonVariant.red => AppColors.redGradient,
+            NeonVariant.red => AppColors.pinkGradient,
             NeonVariant.ghost => null,
           };
     final bg = !enabled
@@ -282,7 +285,7 @@ class _SayCardState extends State<SayCard> {
 
   @override
   Widget build(BuildContext context) {
-    final style = AppText.ui(20, height: 1.4);
+    final style = AppText.body(20, height: 1.4);
     final shown = widget.text.substring(0, _typed.clamp(0, widget.text.length));
     return Container(
       width: double.infinity,
@@ -291,7 +294,7 @@ class _SayCardState extends State<SayCard> {
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF171C48), Color(0xFF10143A)],
+          colors: [AppColors.surfaceHigh, AppColors.surface],
         ),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.blue.withValues(alpha: .4)),
@@ -338,8 +341,8 @@ class PickerGrid extends StatelessWidget {
 
   Color get _accent => switch (spec.style) {
         PickStyle.blue => AppColors.blue,
-        PickStyle.red => AppColors.red,
-        PickStyle.violet => AppColors.violet,
+        PickStyle.red => AppColors.pink,
+        PickStyle.violet => AppColors.primary,
       };
 
   @override
@@ -375,7 +378,7 @@ class PickerGrid extends StatelessWidget {
                       t.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppText.ui(
+                      style: AppText.body(
                         15,
                         weight: FontWeight.w600,
                         decoration: t.dead ? TextDecoration.lineThrough : null,
@@ -398,7 +401,7 @@ class PickerGrid extends StatelessWidget {
               child: Center(
                 child: Text(
                   spec.noneLabel!,
-                  style: AppText.ui(15, weight: FontWeight.w600),
+                  style: AppText.body(15, weight: FontWeight.w600),
                 ),
               ),
             ),
@@ -500,7 +503,7 @@ class ToolsRow extends StatelessWidget {
                   sub,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppText.ui(12,
+                  style: AppText.body(12,
                       weight: FontWeight.w400, color: AppColors.muted),
                 ),
               ],
@@ -516,7 +519,7 @@ class ToolsRow extends StatelessWidget {
               spec.restoreEnabled, AppColors.blue, onRestore),
           const SizedBox(width: 8),
           _tool('Kill process', spec.killSub, spec.killOn, spec.killEnabled,
-              AppColors.red, onKill),
+              AppColors.pink, onKill),
         ],
       );
 }
@@ -568,13 +571,13 @@ class _CountdownClockState extends State<CountdownClock> {
             style: AppText.mono(
               widget.spec.controls ? 60 : 44,
               weight: FontWeight.w700,
-              color: over ? AppColors.red : AppColors.text,
+              color: over ? AppColors.pink : AppColors.text,
               height: 1,
             ).copyWith(
               fontFeatures: const [FontFeature.tabularFigures()],
               shadows: [
                 Shadow(
-                  color: AppColors.violet.withValues(alpha: .55),
+                  color: AppColors.primary.withValues(alpha: .35),
                   blurRadius: 28,
                 ),
               ],
@@ -587,7 +590,7 @@ class _CountdownClockState extends State<CountdownClock> {
               value: _max == 0 ? 0 : _left / _max,
               minHeight: 6,
               backgroundColor: AppColors.line,
-              color: over ? AppColors.red : AppColors.violet,
+              color: over ? AppColors.pink : AppColors.primary,
             ),
           ),
           if (widget.spec.controls) ...[
@@ -639,9 +642,9 @@ class DownList extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.red.withValues(alpha: .08),
+        color: AppColors.pink.withValues(alpha: .08),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.red.withValues(alpha: .45)),
+        border: Border.all(color: AppColors.pink.withValues(alpha: .45)),
       ),
       child: entries.isEmpty
           ? Row(
@@ -652,7 +655,7 @@ class DownList extends StatelessWidget {
                   child: Text(
                     'No machine offline',
                     textAlign: TextAlign.right,
-                    style: AppText.ui(13, color: AppColors.textSoft),
+                    style: AppText.body(13, color: AppColors.textSoft),
                   ),
                 ),
               ],
@@ -678,7 +681,7 @@ class DownList extends StatelessWidget {
                         const SizedBox(width: 8),
                         Flexible(
                           flex: 2,
-                          child: Text(entries[i].role, style: AppText.ui(13)),
+                          child: Text(entries[i].role, style: AppText.body(13)),
                         ),
                       ],
                     ),
@@ -709,7 +712,7 @@ class ResultRow extends StatelessWidget {
             Expanded(
               child: Text(
                 line.text,
-                style: AppText.ui(14, weight: FontWeight.w600, height: 1.35),
+                style: AppText.body(14, weight: FontWeight.w600, height: 1.35),
               ),
             ),
           ],
@@ -728,16 +731,16 @@ class SecretCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.violet.withValues(alpha: .12),
+          color: AppColors.primary.withValues(alpha: .12),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.violet.withValues(alpha: .5)),
+          border: Border.all(color: AppColors.primary.withValues(alpha: .5)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Lbl('Narrator only', color: Color(0xFFC7B5FF)),
+            const Lbl('Narrator only', color: AppColors.primarySoft),
             const SizedBox(height: 6),
-            Text(text, style: AppText.ui(14, height: 1.4)),
+            Text(text, style: AppText.body(14, height: 1.4)),
           ],
         ),
       );
@@ -753,13 +756,13 @@ class BannerCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.red.withValues(alpha: .10),
+          color: AppColors.pink.withValues(alpha: .10),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.red.withValues(alpha: .4)),
+          border: Border.all(color: AppColors.pink.withValues(alpha: .4)),
         ),
         child: Text(
           text,
-          style: AppText.ui(14, weight: FontWeight.w600, color: AppColors.redSoft),
+          style: AppText.body(14, weight: FontWeight.w600, color: AppColors.pinkSoft),
         ),
       );
 }
@@ -783,7 +786,7 @@ class PhishAnswers extends StatelessWidget {
                       r.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppText.ui(16, weight: FontWeight.w600),
+                      style: AppText.body(16, weight: FontWeight.w600),
                     ),
                   ),
                   SizedBox(
@@ -791,10 +794,10 @@ class PhishAnswers extends StatelessWidget {
                     height: 44,
                     child: _Tile(
                       selected: r.clicked == true,
-                      accent: AppColors.red,
+                      accent: AppColors.pink,
                       onTap: () => onAnswer(r.id, true),
                       child: Center(
-                        child: Text('Click', style: AppText.ui(14)),
+                        child: Text('Click', style: AppText.body(14)),
                       ),
                     ),
                   ),
@@ -807,7 +810,7 @@ class PhishAnswers extends StatelessWidget {
                       accent: AppColors.blue,
                       onTap: () => onAnswer(r.id, false),
                       child: Center(
-                        child: Text('Report', style: AppText.ui(14)),
+                        child: Text('Report', style: AppText.body(14)),
                       ),
                     ),
                   ),

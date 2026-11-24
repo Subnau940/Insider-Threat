@@ -6,28 +6,29 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../game/events.dart';
 import '../../theme/app_theme.dart';
+import '../../theme/palette.dart';
 
-const kCardPanel = Color(0xFF0E1420);
-const kCardLime = Color(0xFFCCF500);
-const kCardMuted = Color(0xFF6B7690);
+const kCardPanel = AppColors.surface;
+const kCardLime = AppColors.primary;
+const kCardMuted = Cod.c500;
 
 /// Standard card, width / height.
 const kCardRatio = 63 / 88;
 
 extension EventSideStyle on EventSide {
   Color get color => switch (this) {
-        EventSide.blue => const Color(0xFF3B6BFF),
-        EventSide.red => const Color(0xFFFF3D5A),
+        EventSide.blue => AppColors.blue,
+        EventSide.red => AppColors.pink,
         EventSide.chaos => kCardLime,
       };
 
   /// Text colour on top of [color].
-  Color get ink => this == EventSide.chaos ? kCardPanel : Colors.white;
+  Color get ink => AppColors.onAccent;
 }
 
 TextStyle cardInter({
   required double size,
-  Color color = Colors.white,
+  Color color = AppColors.text,
   FontWeight weight = FontWeight.w400,
   double? height,
   double? spacing,
@@ -55,7 +56,7 @@ double interval(double t, double a, double b, [Curve curve = Curves.easeOutCubic
 
 /// Dark grid background shared by both faces.
 class GridPainter extends CustomPainter {
-  GridPainter(this.step, {this.color = const Color(0x177896C8)});
+  GridPainter(this.step, {this.color = AppColors.grid});
 
   final double step;
   final Color color;
@@ -311,7 +312,7 @@ class CardFront extends StatelessWidget {
                           Text(face.flavor,
                               style: cardInter(
                                   size: w * 0.038,
-                                  color: const Color(0xFFAAB4C3),
+                                  color: AppColors.textSoft,
                                   style: FontStyle.italic,
                                   height: 1.35)),
                         ),

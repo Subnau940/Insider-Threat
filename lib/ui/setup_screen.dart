@@ -73,7 +73,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   leading: TeamDot(r.info.team),
                   minLeadingWidth: 12,
                   title: Text(r.info.name,
-                      style: AppText.ui(16, weight: FontWeight.w600)),
+                      style: AppText.body(16, weight: FontWeight.w600)),
                   subtitle: Text(r.info.character, style: AppText.mono(11)),
                   trailing: Text(
                     '${counts[r] ?? 0}/${target[r] ?? 0}',
@@ -108,7 +108,7 @@ class _SetupScreenState extends State<SetupScreen> {
                     TextButton(
                       onPressed: widget.onBack,
                       child: Text('‹ Back',
-                          style: AppText.ui(15, color: AppColors.muted)),
+                          style: AppText.body(15, color: AppColors.muted)),
                     ),
                     const Spacer(),
                     const TagChip('Setup'),
@@ -141,7 +141,7 @@ class _SetupScreenState extends State<SetupScreen> {
                       children: [
                         Expanded(
                           child: Text('Expert mode (Event cards)',
-                              style: AppText.ui(15, weight: FontWeight.w600)),
+                              style: AppText.body(15, weight: FontWeight.w600)),
                         ),
                         Switch(
                           value: s.expert,
@@ -150,7 +150,7 @@ class _SetupScreenState extends State<SetupScreen> {
                               const WidgetStatePropertyAll(AppColors.text),
                           trackColor: WidgetStateProperty.resolveWith(
                             (st) => st.contains(WidgetState.selected)
-                                ? AppColors.violet
+                                ? AppColors.primary
                                 : AppColors.line,
                           ),
                         ),
@@ -176,17 +176,17 @@ class _SetupScreenState extends State<SetupScreen> {
                       children: [
                         const Expanded(child: Lbl('Clockwise seating order')),
                         Text('${s.countTeam(Team.red)}',
-                            style: AppText.ui(14, weight: FontWeight.w600)),
+                            style: AppText.body(14, weight: FontWeight.w600)),
                         const SizedBox(width: 5),
                         const TeamDot(Team.red),
                         const SizedBox(width: 12),
                         Text('${s.countTeam(Team.blue)}',
-                            style: AppText.ui(14, weight: FontWeight.w600)),
+                            style: AppText.body(14, weight: FontWeight.w600)),
                         const SizedBox(width: 5),
                         const TeamDot(Team.blue),
                         const SizedBox(width: 12),
                         Text('${s.countTeam(Team.purple)}',
-                            style: AppText.ui(14, weight: FontWeight.w600)),
+                            style: AppText.body(14, weight: FontWeight.w600)),
                         const SizedBox(width: 5),
                         const TeamDot(Team.purple),
                       ],
@@ -310,12 +310,12 @@ class _PlayerRow extends StatelessWidget {
                 onChanged: onName,
                 textCapitalization: TextCapitalization.words,
                 textInputAction: TextInputAction.next,
-                style: AppText.ui(18, weight: FontWeight.w600),
+                style: AppText.body(18, weight: FontWeight.w600),
                 decoration: InputDecoration(
                   border: InputBorder.none,
                   isDense: true,
                   hintText: 'Player ${index + 1}',
-                  hintStyle: AppText.ui(18, color: AppColors.disabledText),
+                  hintStyle: AppText.body(18, color: AppColors.disabledText),
                 ),
               ),
             ),
@@ -327,7 +327,7 @@ class _PlayerRow extends StatelessWidget {
               icon: Icon(
                 Icons.qr_code_scanner,
                 size: 20,
-                color: scanned ? AppColors.violet : AppColors.muted,
+                color: scanned ? AppColors.primary : AppColors.muted,
               ),
             ),
             TextButton(
@@ -337,7 +337,7 @@ class _PlayerRow extends StatelessWidget {
                 child: Text(
                   role?.info.name ?? 'Pick role',
                   textAlign: TextAlign.right,
-                  style: AppText.ui(12.5,
+                  style: AppText.body(12.5,
                       color: role == null ? AppColors.blueSoft : AppColors.textSoft),
                 ),
               ),

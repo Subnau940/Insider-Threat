@@ -1,44 +1,67 @@
-/// Design tokens from the prototype (calm neon: navy, electric blue, violet,
-/// red). Re-skinning the app starts here.
+/// Semantic design tokens, mapped onto the raw ramps in `palette.dart`
+/// (lime / pink / blue / grey, primary = the -400 step). Re-skinning the app
+/// starts here.
+///
+/// Roles: [primary] (lime) is the brand accent and the call to action, kept
+/// for what is actionable or selected so it does not dominate. [blue] is
+/// narration and the Defenders, [pink] is danger and the Red Team.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../game/models.dart';
+import 'palette.dart';
 
 abstract final class AppColors {
-  static const bg = Color(0xFF090B1A);
-  static const surface = Color(0xFF12163A);
-  static const line = Color(0xFF272C5A);
-  static const text = Color(0xFFEEF1FF);
-  static const textSoft = Color(0xFFC9D0F5);
-  static const muted = Color(0xFF9AA4D6);
-  static const blue = Color(0xFF5B8CFF);
-  static const blueSoft = Color(0xFF9DB6FF);
-  static const violet = Color(0xFF9B6BFF);
-  static const red = Color(0xFFFF4D6A);
-  static const redSoft = Color(0xFFFF9DAE);
-  static const purple = Color(0xFFA97BFF);
-  static const onAccent = Color(0xFF070A1C);
-  static const disabledBg = Color(0xFF171B3C);
-  static const disabledText = Color(0xFF7580B5);
+  // Neutrals: dark background, surfaces get lighter as they rise.
+  static const bg = Cod.c950;
+  static const surface = Cod.c900;
+  static const surfaceHigh = Cod.c800;
+  static const line = Cod.c800;
+  static const text = Cod.c50;
+  static const textSoft = Cod.c300;
+  static const muted = Cod.c400;
+  static const disabledBg = Cod.c900;
+  static const disabledText = Cod.c600;
+
+  // Brand / actionable / selected.
+  static const primary = Lime.c400;
+  static const primarySoft = Lime.c200;
+  static const onAccent = Cod.c950;
+
+  // Narration, info, Defenders.
+  static const blue = Picton.c400;
+  static const blueSoft = Picton.c300;
+
+  // Danger, Red Team.
+  static const pink = Blush.c400;
+  static const pinkSoft = Blush.c200;
+
+  /// Faint grid lines on the Event card.
+  static const grid = Color(0x17A5A5A1);
 
   static const primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [blue, violet],
+    colors: [Lime.c400, Lime.c500],
   );
-  static const redGradient = LinearGradient(
+  static const pinkGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [red, Color(0xFFC455FF)],
+    colors: [Blush.c400, Blush.c500],
+  );
+  static const blueGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Picton.c300, Picton.c400],
   );
 
+  /// Purple has no ramp of its own: the lone wildcard takes the brand lime.
   static Color team(Team t) => switch (t) {
-        Team.red => red,
+        Team.red => pink,
         Team.blue => blue,
-        Team.purple => purple,
+        Team.purple => primary,
       };
 }
 
@@ -65,6 +88,28 @@ abstract final class AppText {
     return useGoogleFonts ? GoogleFonts.chakraPetch(textStyle: base) : base;
   }
 
+  /// Body copy: Satoshi, bundled (assets/fonts) so it works offline. Titles
+  /// and buttons stay on [ui], labels on [mono].
+  static TextStyle body(
+    double size, {
+    FontWeight weight = FontWeight.w500,
+    Color color = AppColors.text,
+    double? height,
+    double? spacing,
+    TextDecoration? decoration,
+  }) =>
+      TextStyle(
+        fontFamily: 'Satoshi',
+        fontSize: size,
+        fontWeight: weight,
+        // Satoshi is a variable font: drive its weight axis explicitly.
+        fontVariations: [FontVariation('wght', weight.value.toDouble())],
+        color: color,
+        height: height,
+        letterSpacing: spacing,
+        decoration: decoration,
+      );
+
   static TextStyle mono(
     double size, {
     FontWeight weight = FontWeight.w500,
@@ -88,11 +133,17 @@ ThemeData buildAppTheme() => ThemeData(
       useMaterial3: true,
       scaffoldBackgroundColor: AppColors.bg,
       colorScheme: const ColorScheme.dark(
-        primary: AppColors.blue,
-        secondary: AppColors.violet,
-        error: AppColors.red,
+        primary: AppColors.primary,
+        onPrimary: AppColors.onAccent,
+        secondary: AppColors.blue,
+        onSecondary: AppColors.onAccent,
+        tertiary: AppColors.pink,
+        onTertiary: AppColors.onAccent,
+        error: AppColors.pink,
+        onError: AppColors.onAccent,
         surface: AppColors.surface,
         onSurface: AppColors.text,
+        outline: AppColors.line,
       ),
       dialogTheme: const DialogThemeData(backgroundColor: AppColors.surface),
       bottomSheetTheme: const BottomSheetThemeData(
