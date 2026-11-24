@@ -68,21 +68,27 @@ class Lbl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(
-        text.toUpperCase(),
+        text,
         textAlign: align,
-        style: AppText.mono(11, color: color, height: 1.3, spacing: 1.5),
+        style: AppText.body(13, color: color, height: 1.35),
       );
 }
 
 class TagChip extends StatelessWidget {
-  const TagChip(this.text, {super.key, this.danger = false});
+  const TagChip(this.text, {super.key, this.danger = false, this.pink = false});
 
   final String text;
+
+  /// Warning tag. Pink, like [pink].
   final bool danger;
+
+  /// Pink instead of the default blue.
+  final bool pink;
 
   @override
   Widget build(BuildContext context) {
-    final base = danger ? AppColors.pink : AppColors.blue;
+    final isPink = danger || pink;
+    final base = isPink ? AppColors.pink : AppColors.blue;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
       decoration: BoxDecoration(
@@ -90,11 +96,11 @@ class TagChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(13),
       ),
       child: Text(
-        text.toUpperCase(),
-        style: AppText.mono(
-          danger ? 10 : 11,
-          color: danger ? AppColors.pinkSoft : AppColors.blueSoft,
-          spacing: 1.1,
+        text,
+        style: AppText.body(
+          14,
+          weight: FontWeight.w600,
+          color: isPink ? AppColors.pinkSoft : AppColors.blueSoft,
         ),
       ),
     );
@@ -187,7 +193,7 @@ class NeonButton extends StatelessWidget {
                 label.toUpperCase(),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppText.ui(
+                style: AppText.body(
                   fontSize,
                   weight: FontWeight.w700,
                   color: fg,
@@ -496,7 +502,7 @@ class ToolsRow extends StatelessWidget {
                   title.toUpperCase(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppText.ui(14, weight: FontWeight.w700),
+                  style: AppText.body(14, weight: FontWeight.w700, spacing: .6),
                 ),
                 const SizedBox(height: 5),
                 Text(

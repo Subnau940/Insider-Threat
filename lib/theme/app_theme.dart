@@ -69,6 +69,10 @@ abstract final class AppText {
   /// Tests turn this off so that no font is fetched from the network.
   static bool useGoogleFonts = true;
 
+  /// Titles: Schabo Condensed, bundled. It has a single weight, so [weight]
+  /// is ignored (no faux bold), and it runs small for its size, hence [_titleScale].
+  static const _titleScale = 1.15;
+
   static TextStyle ui(
     double size, {
     FontWeight weight = FontWeight.w500,
@@ -76,20 +80,19 @@ abstract final class AppText {
     double? height,
     double? spacing,
     TextDecoration? decoration,
-  }) {
-    final base = TextStyle(
-      fontSize: size,
-      fontWeight: weight,
-      color: color,
-      height: height,
-      letterSpacing: spacing,
-      decoration: decoration,
-    );
-    return useGoogleFonts ? GoogleFonts.chakraPetch(textStyle: base) : base;
-  }
+  }) =>
+      TextStyle(
+        fontFamily: 'Schabo',
+        fontSize: size * _titleScale,
+        fontWeight: FontWeight.w400,
+        color: color,
+        height: height,
+        letterSpacing: spacing,
+        decoration: decoration,
+      );
 
-  /// Body copy: Satoshi, bundled (assets/fonts) so it works offline. Titles
-  /// and buttons stay on [ui], labels on [mono].
+  /// Body copy, labels and buttons: Satoshi, bundled (assets/fonts) so it
+  /// works offline. Titles use [ui].
   static TextStyle body(
     double size, {
     FontWeight weight = FontWeight.w500,
