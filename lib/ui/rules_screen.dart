@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 
 import '../game/events.dart';
@@ -676,8 +674,8 @@ class _FlipButton extends StatelessWidget {
       );
 }
 
-/// A role card that turns over (to the left) to show the character side,
-/// and back.
+/// A role card that shows its character side, and back, with no turning
+/// animation. Tap anywhere on it (or its arrow) to switch.
 class _FlipRoleCard extends StatefulWidget {
   const _FlipRoleCard({required this.info});
 
@@ -687,29 +685,10 @@ class _FlipRoleCard extends StatefulWidget {
   State<_FlipRoleCard> createState() => _FlipRoleCardState();
 }
 
-class _FlipRoleCardState extends State<_FlipRoleCard> with SingleTickerProviderStateMixin {
-  late final AnimationController _flip = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 650),
-  );
+class _FlipRoleCardState extends State<_FlipRoleCard> {
+  bool _showBack = false;
 
-  @override
-  void dispose() {
-    _flip.dispose();
-    super.dispose();
-  }
-
-  void _toggle() {
-    final reduce = MediaQuery.of(context).disableAnimations;
-    final toBack = _flip.value < .5;
-    if (reduce) {
-      _flip.value = toBack ? 1 : 0;
-    } else if (toBack) {
-      _flip.forward();
-    } else {
-      _flip.reverse();
-    }
-  }
+  void _toggle() => setState(() => _showBack = !_showBack);
 
   @override
   Widget build(BuildContext context) {
@@ -725,63 +704,31 @@ class _FlipRoleCardState extends State<_FlipRoleCard> with SingleTickerProviderS
     );
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      // Tap anywhere on the card to turn it over; touch and slide to tilt it.
+      // Tap anywhere on the card to switch sides; touch and slide to tilt it.
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: _toggle,
-        child: AnimatedBuilder(
-          animation: _flip,
-          builder: (context, child) => Tilt3D(
-            enabled: !_flip.isAnimating,
-            child: child!,
+        child: Tilt3D(
+          child: ConstrainedBox(
+            // Tall enough for the full-length character.
+            constraints: const BoxConstraints(minHeight: 420),
+            // Both sides keep the same size: the front sets it.
+            child: Stack(
+              fit: StackFit.passthrough,
+              children: [
+                Visibility(
+                  visible: !_showBack,
+                  maintainSize: true,
+                  maintainAnimation: true,
+                  maintainState: true,
+                  child: front,
+                ),
+                if (_showBack) Positioned.fill(child: back),
+              ],
+            ),
           ),
-          child: _flipping(front, back),
         ),
       ),
-    );
-  }
-
-  Widget _flipping(Widget front, Widget back) {
-    return ConstrainedBox(
-        // Tall enough for the full-length character.
-        constraints: const BoxConstraints(minHeight: 420),
-        child: AnimatedBuilder(
-          animation: _flip,
-          builder: (context, _) {
-            final t = Curves.easeInOutCubic.transform(_flip.value);
-            final showBack = t >= .5;
-            // Negative angle: the card turns towards the left.
-            final angle = -pi * t;
-            final lift = 1 + .06 * sin(pi * t);
-            return Transform(
-              alignment: Alignment.center,
-              transform: Matrix4.identity()
-                ..setEntry(3, 2, .0012)
-                ..rotateY(angle)
-                ..scaleByDouble(lift, lift, 1, 1),
-              child: Stack(
-                fit: StackFit.passthrough,
-                children: [
-                  Visibility(
-                    visible: !showBack,
-                    maintainSize: true,
-                    maintainAnimation: true,
-                    maintainState: true,
-                    child: front,
-                  ),
-                  if (showBack)
-                    Positioned.fill(
-                      child: Transform(
-                        alignment: Alignment.center,
-                        transform: Matrix4.rotationY(pi),
-                        child: back,
-                      ),
-                    ),
-                ],
-              ),
-            );
-          },
-        ),
     );
   }
 }

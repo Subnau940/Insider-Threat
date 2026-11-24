@@ -74,9 +74,9 @@ Le déroulé est repris de `/Users/elysabeth/Downloads/flutter_event_draw/` : al
 ## Réglages et confort
 - **Réglages** (`lib/app_settings.dart`, enregistrés avec `shared_preferences`) : son on/off, volume général, « Narrator tips ». Le bouton réglages est en haut à droite de l'accueil, du setup et de la partie.
 - **Son :** `Sfx` multiplie le volume de chaque son par `AppSettings.gain`. Un changement s'applique tout de suite aux ambiances en cours.
-- **Narrator tips :** affiche la ligne « Do » (`step.todo`) sous le texte à lire. Activé par défaut pour les débutants, et un Narrateur expérimenté peut le couper.
+- **Narrator tips :** affiche la ligne « Do » (`step.todo`) sous le texte à lire, plus les rappels (`step.results`, par exemple « Show X the role card of Y »). Activé par défaut pour les débutants, et un Narrateur expérimenté peut tout couper.
 - **Cartes jouables** (`Tilt3D`, `lib/ui/tilt_card.dart`) : la carte s'incline en 3D sous le doigt ou la souris, avec un reflet, puis revient à plat. Ça marche sur les cartes de rôle (Rules et révélation) et sur les cartes Event une fois tirées.
-- **Rules :** toute la barre « ← Rules » sert de retour. Un tap n'importe où sur une carte de rôle la retourne.
+- **Rules :** toute la barre « ← Rules » sert de retour. Un tap n'importe où sur une carte de rôle, ou sur sa flèche, change de face instantanément, sans animation de retournement.
 - **Setup :** le bouton « Reset players » vide les noms et les rôles. Taper ailleurs ou faire défiler la liste ferme le clavier.
 - **Art :** la Red Team a son personnage (`assets/characters/red_team.png`).
 

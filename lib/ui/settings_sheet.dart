@@ -99,7 +99,7 @@ class _SettingsSheet extends StatelessWidget {
                 _SwitchRow(
                   title: 'Narrator tips',
                   sub: s.narratorTips
-                      ? 'Beginner: each step explains what to do'
+                      ? 'Beginner: each step explains what to do, with reminders'
                       : 'Experienced: only the lines to read',
                   value: s.narratorTips,
                   onChanged: s.setNarratorTips,

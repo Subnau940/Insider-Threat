@@ -188,7 +188,7 @@ class _StepBody extends StatelessWidget {
       if (step.banner != null) BannerCard(text: step.banner!),
       SayCard(text: step.say),
       // Beginner help: what the Narrator does now. Hidden for experienced
-      // Narrators (Settings > Narrator tips).
+      // Narrators (Settings > Narrator tips), like the reminder lines below.
       if (AppSettings.instance.narratorTips && step.todo.isNotEmpty) TipCard(text: step.todo),
       if (step.secret != null) SecretCard(text: step.secret!),
       if (step.quiz != null)
@@ -210,7 +210,9 @@ class _StepBody extends StatelessWidget {
           onPick: (id) => _pick(context, id),
           onNone: game.pickNone,
         ),
-      for (final r in step.results) ResultRow(line: r),
+      // Narrator reminders ("Show X the role card of Y"): beginner help too.
+      if (AppSettings.instance.narratorTips)
+        for (final r in step.results) ResultRow(line: r),
       if (step.reveal.isNotEmpty)
         NeonButton(
           label: step.reveal.length > 1 ? 'Show the cards again' : 'Show the card again',
