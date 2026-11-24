@@ -36,8 +36,8 @@ class GameController extends ChangeNotifier {
   final bool expert;
   final Random rng;
 
-  /// Roles dealt at the start. The Narrator calls them all night long, even
-  /// when their holder is gone, so that silence never reveals who is out.
+  /// Roles dealt at the start. Only these are called at night, even when
+  /// their holder is gone, so that silence never reveals who is out.
   final Set<RoleId> inPlay;
 
   GamePhase phase = GamePhase.night;
@@ -76,7 +76,8 @@ class GameController extends ChangeNotifier {
   bool electionToday = false;
   bool skipDebate = false;
   bool skipVote = false;
-  int debateSeconds = 300;
+  /// Debate length (rules: 3 minutes, Black Friday Rush: 1 minute).
+  int debateSeconds = 180;
   List<int> ddosOrder = [];
   int ddosIndex = 0;
 
@@ -120,19 +121,11 @@ class GameController extends ChangeNotifier {
     if (nightEvent == EventCard.c2ServerDown) {
       final attackers = _attackersOf(this);
       if (attackers.isEmpty) return null;
-      final counts = <int, int>{};
-      for (final a in attackers) {
-        final t = _sel['red:${a.id}']?.firstOrNull;
-        if (t == null) return null;
-        counts[t] = (counts[t] ?? 0) + 1;
-      }
-      // 4 attackers or more: a majority is enough. Otherwise: unanimity.
-      final needed =
-          attackers.length >= 4 ? attackers.length ~/ 2 + 1 : attackers.length;
-      for (final e in counts.entries) {
-        if (e.value >= needed) return e.key;
-      }
-      return null;
+      // The target goes down only if every attacker chose it.
+      final targets = {
+        for (final a in attackers) _sel['red:${a.id}']?.firstOrNull,
+      };
+      return targets.length == 1 ? targets.single : null;
     }
     return _sel['red']?.firstOrNull;
   }
@@ -331,14 +324,15 @@ class GameController extends ChangeNotifier {
     // The Incident Responder's tools only count when they could really be used.
     final ir = holder(RoleId.incidentResponder);
     final irActive = ir != null && ir.alive && !outage;
+    // A blocked attack (Honeypot) leaves nothing to restore.
+    final victim = effectiveVictim;
     final useRestore = restore &&
         irActive &&
         !restoreUsed &&
-        rawTarget != null &&
+        victim != null &&
         ev != EventCard.zeroDay;
     final useKill = kill && irActive && !killUsed;
 
-    final victim = effectiveVictim;
     if (useRestore) restoreUsed = true;
     if (victim != null && !useRestore) deaths.add(victim);
     if (honeypotTriggered) {
@@ -390,7 +384,7 @@ class GameController extends ChangeNotifier {
     electionToday = false;
     skipDebate = false;
     skipVote = false;
-    debateSeconds = 300;
+    debateSeconds = 180;
     ddosOrder = [];
     ddosIndex = 0;
     todayEvent = null;

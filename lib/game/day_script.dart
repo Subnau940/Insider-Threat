@@ -50,12 +50,12 @@ GuideStep _buildDay(GameController c) {
     case DayStage.election:
       return GuideStep(
         kind: StepKind.election,
-        kicker: 'Open vote, 2 minutes',
+        kicker: 'Open vote, 1 minute',
         title: 'CISO election',
         sub: 'Double vote, breaks ties',
         say:
             'Before the debate, the network elects its CISO. Everyone points at one machine. The CISO\'s vote counts double.',
-        todo: 'Run a two minute open vote, then tap the elected machine.',
+        todo: 'Run a one minute open vote, then tap the elected machine.',
         selKey: 'ciso',
         picker: PickerSpec(
           label: 'Who is the CISO?',
@@ -64,7 +64,7 @@ GuideStep _buildDay(GameController c) {
         ),
         clock: const ClockSpec(
           id: 'election',
-          seconds: 120,
+          seconds: 60,
           label: 'Election time left',
         ),
         canContinue: c.ciso != null,
@@ -134,7 +134,7 @@ GuideStep _buildDay(GameController c) {
       }
       return GuideStep(
         kind: StepKind.debate,
-        kicker: c.debateSeconds == 60 ? 'One minute' : 'Five minutes',
+        kicker: c.debateSeconds == 60 ? 'One minute' : 'Three minutes',
         title: 'Debate',
         sub: '${c.alivePlayers.length} machines online',
         say: c.todayEvent == EventCard.maintenanceWindow
@@ -174,6 +174,10 @@ GuideStep _buildDay(GameController c) {
       final pick = c.sel('vote').firstOrNull;
       final none = c.hasNone('vote');
       final silent = c.todayEvent == EventCard.remoteWorkDay;
+      final linked = c.link.length == 2 &&
+              c.link.every((i) => c.players[i].alive)
+          ? ' ${c.players[c.link[0]].name} and ${c.players[c.link[1]].name} share a VPN tunnel: they cannot vote against each other.'
+          : '';
       return GuideStep(
         kind: StepKind.vote,
         kicker: 'On the count of three',
@@ -183,7 +187,7 @@ GuideStep _buildDay(GameController c) {
             ? 'Remote Work Day: nobody meets at the coffee machine. On my count, everyone points at the machine to quarantine, in silence. Three... two... one... vote!'
             : 'Incident Review is over. On my count, everyone points at the machine to quarantine. Three... two... one... vote!',
         todo:
-            'Count the votes and tap the machine with the most. ${cisoP == null ? 'Without a CISO, a tie quarantines nobody.' : '${cisoP.name} votes double and breaks ties.'}',
+            'Count the votes and tap the machine with the most. ${cisoP == null ? 'Without a CISO, a tie quarantines nobody.' : '${cisoP.name} votes double and breaks ties.'}$linked',
         banner: banner,
         selKey: 'vote',
         picker: PickerSpec(

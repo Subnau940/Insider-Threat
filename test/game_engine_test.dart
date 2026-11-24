@@ -117,7 +117,8 @@ void reachNight2(GameController c, {EventCard? event}) {
 
 void main() {
   group('compositions', () {
-    test('every count from 8 to 18 adds up', () {
+    test('every count from 5 to 14 adds up', () {
+      expect((minPlayers, maxPlayers), (5, 14));
       for (var n = minPlayers; n <= maxPlayers; n++) {
         final comp = recommendedComposition(n);
         expect(comp.total, n, reason: '$n players');
@@ -125,15 +126,28 @@ void main() {
       }
     });
 
-    test('matches the rulebook table', () {
-      final c8 = recommendedComposition(8);
-      expect((c8.red, c8.purple, c8.defenders), (2, 0, 3));
-      final c14 = recommendedComposition(14);
-      expect((c14.red, c14.purple, c14.defenders), (3, 1, 5));
-      final c18 = recommendedComposition(18);
-      expect((c18.red, c18.purple, c18.defenders), (4, 1, 8));
-      // in-between counts add Defenders to the row below
-      expect(recommendedComposition(11).defenders, 4);
+    test('matches the rules table', () {
+      // players: (red, purple, special roles, defenders)
+      const table = {
+        5: (1, 0, 2, 2),
+        6: (1, 0, 3, 2),
+        7: (2, 0, 3, 2),
+        8: (2, 0, 3, 3),
+        9: (2, 0, 4, 3),
+        10: (2, 0, 5, 3),
+        11: (3, 0, 5, 3),
+        12: (3, 0, 5, 4),
+        13: (3, 0, 5, 5),
+        14: (3, 1, 5, 5),
+      };
+      for (final e in table.entries) {
+        final c = recommendedComposition(e.key);
+        expect((c.red, c.purple, c.special.length, c.defenders), e.value,
+            reason: '${e.key} players');
+      }
+      expect(recommendedComposition(5).special,
+          [RoleId.threatHunter, RoleId.incidentResponder]);
+      expect(recommendedComposition(6).special, contains(RoleId.deadMansSwitch));
     });
   });
 
@@ -338,12 +352,25 @@ void main() {
       c.primary();
       expect(c.currentStep.kind, StepKind.election);
       expect(c.currentStep.canContinue, isFalse);
+      expect(c.currentStep.clock!.seconds, 60, reason: '1 minute election');
       c.pick(5);
       expect(c.ciso, 5);
       c.primary();
       expect(c.currentStep.kind, StepKind.debate);
+      expect(c.currentStep.clock!.seconds, 180, reason: '3 minute debate');
       c.primary();
       expect(c.currentStep.kind, StepKind.vote);
+    });
+
+    test('the vote reminds the Narrator of the VPN tunnel', () {
+      final roles = [..._eight, RoleId.networkEngineer];
+      final c = make(roles);
+      playNight(c, victim: 7, link: [5, 6]);
+      toVote(c, ciso: 2);
+      expect(c.currentStep.kind, StepKind.vote);
+      expect(c.currentStep.todo,
+          contains('P5 and P6 share a VPN tunnel: they cannot vote against each other'));
+      expect(c.currentStep.say, isNot(contains('VPN')));
     });
 
     test('quarantine reveals the role and leads to the next night', () {
@@ -471,6 +498,20 @@ void main() {
       expect(c.currentStep.say, contains('Honeypot triggered'));
     });
 
+    test('Honeypot: a blocked attack leaves nothing to restore', () {
+      final c = make(_eight);
+      reachNight2(c, event: EventCard.honeypot);
+      final decoy = c.honeypotId!;
+      final s = _stepOf(c, StepKind.responder, victim: decoy);
+      expect(s.tools!.restoreEnabled, isFalse);
+      expect(s.say, contains('Nobody was compromised'));
+      c.toggleRestore();
+      c.primary(); // responder
+      c.primary(); // dawn
+      expect(c.restoreUsed, isFalse, reason: 'Backup Restore is kept');
+      expect(c.players[decoy].alive, isTrue);
+    });
+
     test('Honeypot: another target goes through, silently', () {
       final c = make(_eight);
       reachNight2(c, event: EventCard.honeypot);
@@ -499,6 +540,37 @@ void main() {
       expect(c.morningIds, isEmpty, reason: 'the attack fails');
       expect(c.players[5].alive, isTrue);
       expect(c.players[3].alive, isTrue);
+    });
+
+    test('C2 Server Down: four attackers still need unanimity', () {
+      // The 14-player table: 0-2 Red, 3 Purple, 9-13 Defenders.
+      final roles = recommendedComposition(14).pool;
+      final c = make(roles);
+      final attackers =
+          c.players.where((p) => p.team != Team.blue).map((p) => p.id).toList();
+      expect(attackers.length, 4);
+      final blues =
+          c.players.where((p) => p.team == Team.blue).map((p) => p.id).toList();
+      playNight(c, victim: blues.last, link: [9, 10]);
+      toVote(c, ciso: blues.first);
+      c.debugSetTodayEvent(EventCard.c2ServerDown);
+      quarantine(c, blues[blues.length - 2]);
+      expect(c.night, 2);
+      final target = blues[1];
+      var solos = 0;
+      var guard = 0;
+      while (c.phase == GamePhase.night && guard++ < 30) {
+        final s = c.currentStep;
+        if (s.kind == StepKind.redSolo) {
+          solos++;
+          c.pick(solos < 4 ? target : blues[2]); // 3 of 4 agree
+        }
+        if (s.kind == StepKind.hunter && s.picker != null) c.pick(_firstFree(s));
+        if (s.kind == StepKind.purple && s.picker != null) c.pickNone();
+        c.primary();
+      }
+      expect(solos, 4);
+      expect(c.players[target].alive, isTrue, reason: 'no majority rule');
     });
 
     test('C2 Server Down: a unanimous target is compromised', () {

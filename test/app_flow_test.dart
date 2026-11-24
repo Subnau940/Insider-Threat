@@ -56,7 +56,7 @@ void main() {
 
   // Renders every step of full Expert games on a small phone: any layout
   // overflow or build error fails the test.
-  for (final players in [8, 14, 18]) {
+  for (final players in [5, 8, 14]) {
     testWidgets('full expert game renders, $players players', (t) async {
       t.view.physicalSize = const Size(320, 568);
       t.view.devicePixelRatio = 1;

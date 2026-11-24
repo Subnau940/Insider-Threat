@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:insider_threat/game/card_code.dart';
 import 'package:insider_threat/game/compositions.dart';
@@ -7,9 +9,28 @@ import 'package:insider_threat/game/setup_controller.dart';
 void main() {
   group('parseCardCode', () {
     test('reads every printed card', () {
-      // Same deck as qr-codes/: the 18-player composition, numbered per role.
+      // Same deck as qr-codes/: 4 Red, 8 Defenders, one of each special
+      // role and 1 Purple, numbered per role. It covers every table up to 14.
+      final deck = [
+        ...List.filled(4, RoleId.red),
+        ...List.filled(8, RoleId.defender),
+        RoleId.threatHunter,
+        RoleId.incidentResponder,
+        RoleId.deadMansSwitch,
+        RoleId.networkEngineer,
+        RoleId.socAnalyst,
+        RoleId.purple,
+      ];
+      for (var n = minPlayers; n <= maxPlayers; n++) {
+        final need = recommendedComposition(n).counts;
+        for (final e in need.entries) {
+          expect(deck.where((r) => r == e.key).length,
+              greaterThanOrEqualTo(e.value),
+              reason: '$n players, ${e.key.name}');
+        }
+      }
       final seen = <RoleId, int>{};
-      for (final role in recommendedComposition(18).pool) {
+      for (final role in deck) {
         final n = seen[role] = (seen[role] ?? 0) + 1;
         final text = CardCode(role: role, number: n).text;
         final card = parseCardCode(text);
@@ -111,6 +132,25 @@ void main() {
       }
       expect(s.nextUnassigned, isNull);
       expect(s.canStart, isTrue);
+    });
+
+    test('the Purple Team card needs 14 players', () {
+      final s = SetupController()..setCount(13);
+      s.fillRandom(Random(1));
+      expect(s.canStart, isTrue);
+      final defender = s.roles.indexOf(RoleId.defender);
+      s.setRole(defender, RoleId.purple);
+      expect(s.blocker, 'Purple Team needs 14 players');
+      s.setCount(14);
+      s.setRole(13, RoleId.defender);
+      expect(s.canStart, isTrue);
+    });
+
+    test('player count stays between 5 and 14', () {
+      final s = SetupController()..setCount(2);
+      expect(s.count, 5);
+      s.setCount(20);
+      expect(s.count, 14);
     });
   });
 }
