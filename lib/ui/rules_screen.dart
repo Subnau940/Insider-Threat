@@ -6,6 +6,7 @@ import '../game/events.dart';
 import '../game/models.dart';
 import '../theme/app_theme.dart';
 import 'role_card_face.dart';
+import 'tilt_card.dart';
 import 'widgets.dart';
 
 /// The two views of the Rules screen.
@@ -33,17 +34,28 @@ class _RulesScreenState extends State<RulesScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(8, 8, 20, 0),
-            child: Row(
-              children: [
-                IconButton(
-                  tooltip: 'Back',
-                  onPressed: () => Navigator.of(context).maybePop(),
-                  icon: const Icon(Icons.arrow_back_rounded, color: AppColors.text),
+            padding: const EdgeInsets.fromLTRB(8, 8, 12, 0),
+            // The arrow, the title and the space around them all go back.
+            child: Semantics(
+              button: true,
+              label: 'Back',
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () => Navigator.of(context).maybePop(),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 6, 16, 6),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.arrow_back_rounded, color: AppColors.text),
+                      const SizedBox(width: 12),
+                      ExcludeSemantics(
+                        child: Text('Rules', style: AppText.ui(32, weight: FontWeight.w700)),
+                      ),
+                      const Spacer(),
+                    ],
+                  ),
                 ),
-                const SizedBox(width: 4),
-                Text('Rules', style: AppText.ui(32, weight: FontWeight.w700)),
-              ],
+              ),
             ),
           ),
           Padding(
@@ -529,7 +541,7 @@ class _RolesView extends StatelessWidget {
               'the card. Here is every role, its power and its match in the original Werewolf game.'),
         ),
         for (final id in roleDisplayOrder) _FlipRoleCard(info: id.info),
-        const _CisoTile(),
+        const Tilt3D(child: _CisoTile()),
       ],
     );
   }
@@ -713,7 +725,24 @@ class _FlipRoleCardState extends State<_FlipRoleCard> with SingleTickerProviderS
     );
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      child: ConstrainedBox(
+      // Tap anywhere on the card to turn it over; touch and slide to tilt it.
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: _toggle,
+        child: AnimatedBuilder(
+          animation: _flip,
+          builder: (context, child) => Tilt3D(
+            enabled: !_flip.isAnimating,
+            child: child!,
+          ),
+          child: _flipping(front, back),
+        ),
+      ),
+    );
+  }
+
+  Widget _flipping(Widget front, Widget back) {
+    return ConstrainedBox(
         // Tall enough for the full-length character.
         constraints: const BoxConstraints(minHeight: 420),
         child: AnimatedBuilder(
@@ -753,7 +782,6 @@ class _FlipRoleCardState extends State<_FlipRoleCard> with SingleTickerProviderS
             );
           },
         ),
-      ),
     );
   }
 }

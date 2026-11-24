@@ -775,6 +775,39 @@ class ResultRow extends StatelessWidget {
       );
 }
 
+/// Beginner help: what the Narrator does at this step. Not read out loud.
+class TipCard extends StatelessWidget {
+  const TipCard({super.key, required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(Icons.lightbulb_outline_rounded, size: 16, color: AppColors.secondarySoft),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: 'Do  ',
+                    style: AppText.body(14, weight: FontWeight.w700, color: AppColors.secondarySoft),
+                  ),
+                  TextSpan(text: text),
+                ],
+              ),
+              style: AppText.body(14, weight: FontWeight.w400, color: AppColors.muted, height: 1.5),
+            ),
+          ),
+        ],
+      );
+}
+
 /// Narrator-only information, never read out loud.
 class SecretCard extends StatelessWidget {
   const SecretCard({super.key, required this.text});

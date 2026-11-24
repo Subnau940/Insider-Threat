@@ -166,6 +166,19 @@ class SetupController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Clears every name, role and scanned card. The player count stays.
+  void resetPlayers() {
+    for (var i = 0; i < maxPlayers; i++) {
+      names[i] = '';
+      roles[i] = null;
+      cards[i] = null;
+    }
+    notifyListeners();
+  }
+
+  bool get hasPlayerData =>
+      names.any((n) => n.trim().isNotEmpty) || roles.any((r) => r != null);
+
   List<Player> buildPlayers() => [
         for (var i = 0; i < count; i++)
           Player(

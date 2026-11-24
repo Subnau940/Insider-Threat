@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../theme/app_theme.dart';
 import 'rules_screen.dart';
+import 'settings_sheet.dart';
 import 'widgets.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -17,15 +18,17 @@ class HomeScreen extends StatelessWidget {
     final compact = MediaQuery.sizeOf(context).height < 700;
     return NeonBackground(
       mood: Mood.night,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(20, compact ? 32 : 96, 20, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            ..._brand(compact),
-            const Spacer(),
-            ..._actions(context),
-          ],
+      child: _withSettings(
+        Padding(
+          padding: EdgeInsets.fromLTRB(20, compact ? 32 : 96, 20, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ..._brand(compact),
+              const Spacer(),
+              ..._actions(context),
+            ],
+          ),
         ),
       ),
     );
@@ -35,7 +38,7 @@ class HomeScreen extends StatelessWidget {
   Widget _landscape(BuildContext context) => NeonBackground(
         mood: Mood.night,
         maxWidth: 820,
-        child: Padding(
+        child: _withSettings(Padding(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
           child: Row(
             children: [
@@ -53,7 +56,16 @@ class HomeScreen extends StatelessWidget {
               ),
             ],
           ),
-        ),
+        )),
+      );
+
+  /// Sound and Narrator settings, in the top-right corner.
+  Widget _withSettings(Widget child) => Stack(
+        fit: StackFit.expand,
+        children: [
+          child,
+          const Positioned(top: 4, right: 4, child: SettingsButton()),
+        ],
       );
 
   List<Widget> _brand(bool compact) => [
@@ -91,7 +103,7 @@ class HomeScreen extends StatelessWidget {
         const SizedBox(height: 14),
         const SizedBox(
           width: double.infinity,
-          child: Lbl('6-14 players + 1 Narrator · 20-40 min', align: TextAlign.center),
+          child: Lbl('5-14 players + 1 Narrator · 15-40 min', align: TextAlign.center),
         ),
       ];
 }

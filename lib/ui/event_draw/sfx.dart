@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
 
+import '../../app_settings.dart';
 import '../../game/events.dart';
 
 /// Sound effects of the app. Files live in assets/sfx/, named after the enum
@@ -51,9 +52,25 @@ extension RevealSfx on EventSide {
 }
 
 class Sfx {
-  Sfx._();
+  Sfx._() {
+    // Volume or mute changed in the settings: apply it to the sounds that are
+    // playing right now (the ambience loops).
+    AppSettings.instance.addListener(_applyGain);
+  }
 
   static final instance = Sfx._();
+
+  /// Each sound's own level, before the master volume.
+  final Map<SfxId, double> _base = {};
+
+  double get _gain => AppSettings.instance.gain;
+
+  void _applyGain() {
+    for (final id in _active) {
+      if (_fades.containsKey(id)) continue; // fading out: leave it alone
+      _safe(id, (p) => p.setVolume((_base[id] ?? 1) * _gain));
+    }
+  }
 
   /// Tests turn this off: there is no audio plugin in the test environment.
   static bool enabled = true;
@@ -78,11 +95,12 @@ class Sfx {
     if (!enabled) return;
     _fades.remove(id)?.cancel();
     if (id.long) _active.add(id);
+    _base[id] = volume;
     try {
       _player(id)
           .play(
             AssetSource(id.file),
-            volume: volume,
+            volume: volume * _gain,
             mode: id.long ? PlayerMode.mediaPlayer : PlayerMode.lowLatency,
           )
           .catchError((_) {});
@@ -100,9 +118,10 @@ class Sfx {
     if (!enabled) return;
     final fade = _fades.remove(id);
     fade?.cancel();
+    _base[id] = volume;
     // Already looping, or still fading out: keep playing, back at full volume.
     if (!_active.add(id) || fade != null) {
-      _safe(id, (p) => p.setVolume(volume));
+      _safe(id, (p) => p.setVolume(volume * _gain));
       return;
     }
     try {
@@ -112,7 +131,7 @@ class Sfx {
           .then(
             (_) => player.play(
               AssetSource(id.file),
-              volume: volume,
+              volume: volume * _gain,
               mode: PlayerMode.mediaPlayer,
             ),
           )

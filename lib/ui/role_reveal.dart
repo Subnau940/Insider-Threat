@@ -12,6 +12,7 @@ import '../theme/app_theme.dart';
 import 'event_draw/event_card_faces.dart';
 import 'event_draw/sfx.dart';
 import 'role_card_face.dart';
+import 'tilt_card.dart';
 import 'widgets.dart';
 
 Future<void> showRoleReveal(
@@ -111,8 +112,11 @@ class _RoleRevealScreenState extends State<_RoleRevealScreen>
         return Center(
           child: AnimatedBuilder(
             animation: _anim,
-            builder: (context, _) =>
-                _FlippingCard(t: _anim.value, card: card, width: width),
+            builder: (context, _) => Tilt3D(
+              // Playable once it has turned over.
+              enabled: _anim.value >= 1,
+              child: _FlippingCard(t: _anim.value, card: card, width: width),
+            ),
           ),
         );
       },

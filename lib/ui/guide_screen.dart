@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../app_settings.dart';
 import '../game/game_controller.dart';
 import '../game/guide_step.dart';
 import '../theme/app_theme.dart';
 import 'event_draw/event_draw_panel.dart';
 import 'quiz_panel.dart';
 import 'role_reveal.dart';
+import 'settings_sheet.dart';
 import 'widgets.dart';
 
 /// The Narrator's main screen, used for every night and day step.
@@ -36,6 +38,7 @@ class GuideScreen extends StatelessWidget {
               align: TextAlign.right,
             ),
           ),
+          const SettingsButton(),
           IconButton(
             tooltip: 'Quit the game',
             onPressed: onQuit,
@@ -50,7 +53,10 @@ class GuideScreen extends StatelessWidget {
         child: SingleChildScrollView(
           key: ValueKey(pageKey),
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-          child: _StepBody(game: game, step: step),
+          child: ListenableBuilder(
+            listenable: AppSettings.instance,
+            builder: (context, _) => _StepBody(game: game, step: step),
+          ),
         ),
       ),
     );
@@ -181,6 +187,9 @@ class _StepBody extends StatelessWidget {
       if (step.notice.isNotEmpty) DownList(entries: step.notice, compact: true),
       if (step.banner != null) BannerCard(text: step.banner!),
       SayCard(text: step.say),
+      // Beginner help: what the Narrator does now. Hidden for experienced
+      // Narrators (Settings > Narrator tips).
+      if (AppSettings.instance.narratorTips && step.todo.isNotEmpty) TipCard(text: step.todo),
       if (step.secret != null) SecretCard(text: step.secret!),
       if (step.quiz != null)
         QuizPanel(spec: step.quiz!, onCount: game.setQuizCorrect),

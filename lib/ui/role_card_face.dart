@@ -10,6 +10,7 @@ import 'widgets.dart';
 
 /// Official character art, by role. Roles without art leave the space blank.
 const Map<RoleId, String> roleArt = {
+  RoleId.red: 'assets/characters/red_team.png',
   RoleId.incidentResponder: 'assets/characters/incident_responder.png',
   RoleId.socAnalyst: 'assets/characters/soc_analyst.png',
 };

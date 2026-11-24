@@ -5,6 +5,7 @@ import '../game/models.dart';
 import '../game/setup_controller.dart';
 import '../theme/app_theme.dart';
 import 'scan_screen.dart';
+import 'settings_sheet.dart';
 import 'widgets.dart';
 
 class SetupScreen extends StatefulWidget {
@@ -35,6 +36,33 @@ class _SetupScreenState extends State<SetupScreen> {
       c.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> _confirmReset() async {
+    FocusScope.of(context).unfocus();
+    if (!widget.setup.hasPlayerData) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Reset the players?', style: AppText.ui(20, weight: FontWeight.w700)),
+        content: Text('Every name and role card will be cleared.', style: AppText.body(15)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Reset', style: TextStyle(color: AppColors.danger)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    for (final c in _names) {
+      c.clear();
+    }
+    widget.setup.resetPlayers();
   }
 
   void _openScan([int? player]) {
@@ -103,7 +131,7 @@ class _SetupScreenState extends State<SetupScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(8, 4, 20, 0),
+                padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
                 child: Row(
                   children: [
                     TextButton(
@@ -113,11 +141,14 @@ class _SetupScreenState extends State<SetupScreen> {
                     ),
                     const Spacer(),
                     const TagChip('Setup'),
+                    const SizedBox(width: 4),
+                    const SettingsButton(),
                   ],
                 ),
               ),
               Expanded(
                 child: ListView(
+                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
                   children: [
                     Text('Set the table',
@@ -145,12 +176,28 @@ class _SetupScreenState extends State<SetupScreen> {
                       onPressed: () => _openScan(),
                     ),
                     const SizedBox(height: 8),
-                    NeonButton(
-                      label: 'Deal at random',
-                      variant: NeonVariant.ghost,
-                      height: 46,
-                      fontSize: 13,
-                      onPressed: s.fillRandom,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: NeonButton(
+                            label: 'Deal at random',
+                            variant: NeonVariant.ghost,
+                            height: 46,
+                            fontSize: 13,
+                            onPressed: s.fillRandom,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: NeonButton(
+                            label: 'Reset players',
+                            variant: NeonVariant.ghost,
+                            height: 46,
+                            fontSize: 13,
+                            onPressed: _confirmReset,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 14),
                     Row(
@@ -180,6 +227,7 @@ class _SetupScreenState extends State<SetupScreen> {
                         controller: _names[i],
                         role: s.roles[i],
                         scanned: s.cards[i] != null,
+                        last: i == s.count - 1,
                         onName: (v) => s.setName(i, v),
                         onRole: () => _pickRole(i),
                         onScan: () => _openScan(i),
@@ -275,6 +323,7 @@ class _PlayerRow extends StatelessWidget {
     required this.controller,
     required this.role,
     required this.scanned,
+    required this.last,
     required this.onName,
     required this.onRole,
     required this.onScan,
@@ -284,6 +333,9 @@ class _PlayerRow extends StatelessWidget {
   final TextEditingController controller;
   final RoleId? role;
   final bool scanned;
+
+  /// Last row: the keyboard shows "done" instead of "next".
+  final bool last;
   final ValueChanged<String> onName;
   final VoidCallback onRole;
   final VoidCallback onScan;
@@ -310,7 +362,9 @@ class _PlayerRow extends StatelessWidget {
                 controller: controller,
                 onChanged: onName,
                 textCapitalization: TextCapitalization.words,
-                textInputAction: TextInputAction.next,
+                textInputAction: last ? TextInputAction.done : TextInputAction.next,
+                // Tapping anywhere else closes the keyboard.
+                onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
                 style: AppText.body(18, weight: FontWeight.w600),
                 decoration: InputDecoration(
                   border: InputBorder.none,

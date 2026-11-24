@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 
 import '../../game/events.dart';
 import '../../theme/app_theme.dart';
+import '../tilt_card.dart';
 import 'event_card_faces.dart';
 import 'glitch.dart';
 import 'sfx.dart';
@@ -304,7 +305,12 @@ class _EventDrawPanelState extends State<EventDrawPanel>
                         );
                       },
                     ),
-                    _card(w, h),
+                    Tilt3D(
+                      // Playable once the draw animation is over.
+                      enabled: _shown && !_busy,
+                      radius: 14,
+                      child: _card(w, h),
+                    ),
                   ],
                 ),
               ),

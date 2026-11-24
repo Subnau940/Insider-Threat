@@ -38,6 +38,7 @@ dependencies:
   mobile_scanner: ^7.5.0
   audioplayers: ^6.8.1
   flutter_svg: ^2.5.0
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:
