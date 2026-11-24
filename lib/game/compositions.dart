@@ -1,4 +1,4 @@
-/// Recommended compositions (rulebook, section 3).
+/// Recommended compositions (rules, section 5).
 library;
 
 import 'models.dart';
@@ -35,41 +35,30 @@ class Composition {
   }
 }
 
-const _s3 = [
-  RoleId.threatHunter,
-  RoleId.incidentResponder,
-  RoleId.deadMansSwitch,
-];
+const _s2 = [RoleId.threatHunter, RoleId.incidentResponder];
+const _s3 = [..._s2, RoleId.deadMansSwitch];
 const _s4 = [..._s3, RoleId.networkEngineer];
 const _s5 = [..._s4, RoleId.socAnalyst];
 
-/// Rows of the rulebook table, keyed by player count.
+/// The rulebook table (section 5), one row per player count.
 const Map<int, Composition> _table = {
+  5: Composition(red: 1, purple: 0, special: _s2, defenders: 2),
+  6: Composition(red: 1, purple: 0, special: _s3, defenders: 2),
+  7: Composition(red: 2, purple: 0, special: _s3, defenders: 2),
   8: Composition(red: 2, purple: 0, special: _s3, defenders: 3),
   9: Composition(red: 2, purple: 0, special: _s4, defenders: 3),
   10: Composition(red: 2, purple: 0, special: _s5, defenders: 3),
+  11: Composition(red: 3, purple: 0, special: _s5, defenders: 3),
   12: Composition(red: 3, purple: 0, special: _s5, defenders: 4),
+  13: Composition(red: 3, purple: 0, special: _s5, defenders: 5),
   14: Composition(red: 3, purple: 1, special: _s5, defenders: 5),
-  16: Composition(red: 3, purple: 1, special: _s5, defenders: 7),
-  18: Composition(red: 4, purple: 1, special: _s5, defenders: 8),
 };
 
-const int minPlayers = 8;
-const int maxPlayers = 18;
+const int minPlayers = 5;
+const int maxPlayers = 14;
 
-/// The rulebook gives 8, 9, 10, 12, 14, 16 and 18 players. For the counts in
-/// between (11, 13, 15, 17) we take the row below and add one Defender.
-Composition recommendedComposition(int players) {
-  final n = players.clamp(minPlayers, maxPlayers);
-  var base = minPlayers;
-  for (final k in _table.keys) {
-    if (k <= n) base = k;
-  }
-  final row = _table[base]!;
-  return Composition(
-    red: row.red,
-    purple: row.purple,
-    special: row.special,
-    defenders: row.defenders + (n - base),
-  );
-}
+/// The Purple Team card is only dealt from this many players.
+const int purpleMinPlayers = 14;
+
+Composition recommendedComposition(int players) =>
+    _table[players.clamp(minPlayers, maxPlayers)]!;

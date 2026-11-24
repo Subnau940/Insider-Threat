@@ -1,20 +1,20 @@
 # Brief : Insider Threat (app Flutter du Narrateur)
 
 ## Le projet
-Jeu de déduction sociale inspiré des Loups-garous de Thiercelieux, transposé dans un réseau d'entreprise piraté (CORP-LAN). Il se joue de 8 à 18 joueurs, avec **1 Narrateur humain**. L'app est le compagnon du Narrateur : elle affiche le texte à lire étape par étape, gère les choix de nuit, le suivi de partie, les timers et les Events. Tous les textes de l'app sont en anglais.
+Jeu de déduction sociale inspiré des Loups-garous de Thiercelieux, transposé dans un réseau d'entreprise piraté (CORP-LAN). Il se joue de **5 à 14 joueurs**, avec **1 Narrateur humain**. L'app est le compagnon du Narrateur : elle affiche le texte à lire étape par étape, gère les choix de nuit, le suivi de partie, les timers et les Events. Tous les textes de l'app sont en anglais.
 
 - **Dossier :** `/Users/elysabeth/English Game` (pas de dépôt git).
 - **Plateformes :** iOS, Android, web. Flutter 3.47.5, Dart 3.13.
 
 ## Sources de référence
-- **Règles :** `/Users/elysabeth/Downloads/Insider-Threat-RulebookV2.pdf` (V2, avec Narrateur humain). Le `Insider-Threat-Rulebook.pdf` du dossier projet est l'ancienne version.
+- **Règles :** `/Users/elysabeth/Downloads/Insider-Threat-Regles-FR-2.pdf` (version FR, 5 à 14 joueurs, quiz des Événements). Elle remplace le rulebook V2 et le `Insider-Threat-Rulebook.pdf` du dossier projet.
 - **Events (mode Expert) :** `Insider-Threat-Evenement.pdf`, avec 10 Events. Il **remplace** la liste d'Events et les cartes Défense de la V2.
 - **Prototype UI :** https://claude.ai/artifact/BmQjqDLJ2iXpw6dcXFAUc7 (canvas Design, board `Proto.dc.html`).
 - **Moodboard :** `MOODBOARD.png` (vert acide, terminal CRT, glitch). Pas encore appliqué : l'app suit le look navy néon du prototype.
 - **Exemple d'animation du tirage d'Event :** `/Users/elysabeth/Downloads/flutter_event_draw/`.
 
 ## Architecture
-- `lib/game/` : moteur de règles en Dart pur, sans UI, entièrement testé.
+- `lib/game/` : moteur de règles en Dart pur, sans UI.
   - `game_controller.dart` : machine à états nuit, jour et fin. Gère les éliminations en chaîne (VPN, Dead Man's Switch, successeur du CISO), les conditions de victoire et les Events. Il expose un `GuideStep` que l'UI se contente d'afficher.
   - `night_script.dart` / `day_script.dart` : construction des étapes et textes « Say » (repris du rulebook).
   - `setup_controller.dart` : noms dans l'ordre de la table, rôles choisis à la main ou par scan, compositions recommandées (`compositions.dart`).
@@ -28,18 +28,23 @@ Jeu de déduction sociale inspiré des Loups-garous de Thiercelieux, transposé 
   - `guide_screen` (toutes les étapes de nuit et de jour) ;
   - `end_screen` ;
   - `widgets.dart`.
-- `lib/theme/app_theme.dart` : couleurs et polices (Chakra Petch + JetBrains Mono via google_fonts). `AppText.useGoogleFonts = false` dans les tests.
-- `qr-codes/` : 18 PNG et un PDF A4 à imprimer. Le jeu complet comprend 4 Red, 8 Defenders, 1 de chaque rôle spécial et 1 Purple.
+- `lib/theme/app_theme.dart` : couleurs et polices (Chakra Petch + JetBrains Mono via google_fonts).
+- `qr-codes/` : 18 PNG et un PDF A4 à imprimer. Le jeu complet comprend 4 Red, 8 Defenders, 1 de chaque rôle spécial et 1 Purple. C'est plus que nécessaire pour 14 joueurs (3 Red et 5 Defenders au maximum), donc rien à réimprimer.
 
 ## Décisions prises (à garder)
 - **Victoire du Red Team :** uniquement quand il ne reste que des Red, selon le rulebook. Le prototype, lui, arrêtait la partie dès que les Red égalaient les autres.
-- **Night order :** construit à partir des rôles distribués. Un rôle éliminé est quand même appelé, avec un temps d'attente.
+- **Night order :** construit à partir des rôles distribués. Un rôle éliminé est quand même appelé, avec un temps d'attente. Un rôle non distribué n'est **jamais** appelé, même si les règles le conseillent (choix de l'utilisatrice).
+- **Compositions :** tableau des règles de 5 à 14 joueurs, sans interpolation. La Purple Team n'est autorisée qu'à 14 joueurs (bloqué dans le setup).
+- **Chronos :** débat 3 min, élection du CISO 1 min.
+- **C2 Server Down :** unanimité obligatoire, même à 4 attaquants.
+- **Honeypot déclenché :** l'Incident Responder ne voit aucune victime et ne peut pas consommer son Backup Restore.
+- **VPN Tunnel :** rappel au Narrateur pendant le vote (dans le « todo », jamais lu à voix haute).
 - **Events :** tirés à partir du jour 2, juste après le rapport du matin (et l'élection du CISO s'il n'y en a pas). Tirage sans remise, puis le paquet est remélangé. Seulement en **mode Expert**, qui est désactivé par défaut dans le setup.
 - **QR codes :** au **recto** des cartes, pour que tous les dos restent identiques.
 - **Répliques inventées, à faire relire :** Dead Man's Switch, successeur du CISO, victoires Purple, VPN et Total Outage, et l'étape Dawn.
 
 ## État actuel
-- **Tests :** 63 qui passent (`flutter test`), analyse propre (`flutter analyze`), build iOS simulateur OK.
+- **Pas de tests automatisés :** le dossier `test/` a été supprimé (MVP de 5 jours pour un concours d'école). On vérifie avec `flutter analyze` et en jouant sur téléphone. Build iOS simulateur OK.
 - **Sur appareil :** l'utilisatrice a joué 2 parties entières, sans activer le mode Expert.
 - **Scan QR :** non testé avec une vraie caméra.
 - **Android :** SDK non installé sur le Mac, jamais buildé.
@@ -50,7 +55,6 @@ Le déroulé est repris de `/Users/elysabeth/Downloads/flutter_event_draw/` : al
 - **Code :** `lib/ui/event_draw/` (`event_draw_panel.dart`, `event_card_faces.dart`, `glitch.dart`, `sfx.dart`). Les textes imprimés des cartes sont dans `eventCardFaces` (`lib/game/events.dart`).
 - **Fonctionnement :** le tirage est fait par le moteur, l'animation ne fait que révéler `todayEvent`. Elle se joue une seule fois par jour (`GameController.markEventRevealed`), avec un bouton « Replay the draw ».
 - **Accessibilité :** le réglage « réduire les animations » est respecté.
-- **Tests :** `Sfx.enabled = false`.
 
 ## Quiz des Events (mode Expert)
 - **Déroulé du jour :** tirage avec l'animation (`event`), puis la question avec 3 réponses mélangées et un chrono de 10 s (`quiz`). Ensuite, la bonne réponse et son explication, avec la saisie du nombre de bonnes réponses parmi les joueurs encore en jeu (`quizAnswer`). Enfin, le résultat (`eventResult`).
@@ -59,7 +63,7 @@ Le déroulé est repris de `/Users/elysabeth/Downloads/flutter_event_draw/` : al
   - Un Event **Red** est bloqué si plus de la moitié a bon.
   - Un Event **Chaos** a toujours lieu.
 - **Moteur :** `_drawEvent` ne fait plus que tirer la carte ; `_resolveQuiz` décide et applique les effets de jour (`_applyEffects`). `activeEvent` vaut `null` si l'Event est bloqué. La nuit reçoit `nightEvent = activeEvent`, donc un Event bloqué n'a aucun effet, ni le jour ni la nuit. Revenir en arrière puis changer le nombre de bonnes réponses fait recalculer le résultat.
-- **Questions :** elles sont dans `eventQuizzes` (`lib/game/events.dart`), avec des explications rédigées pour l'appli. Pour les tests, `debugSetTodayEvent` force un Event sans quiz, et `debugDrawEvent` force la carte tirée en gardant le quiz.
+- **Questions :** elles sont dans `eventQuizzes` (`lib/game/events.dart`), avec des explications rédigées pour l'appli.
 
 ## Reste à faire ensuite
 - **Mode Expert plus visible :** choix Base / Expert, et badge pendant la partie.
@@ -72,5 +76,5 @@ Le déroulé est repris de `/Users/elysabeth/Downloads/flutter_event_draw/` : al
 
 ## Consignes de l'utilisatrice
 - Répondre en français.
-- **Ne pas lancer le simulateur** : elle le fait elle-même. Analyser, tester et builder, c'est OK.
+- **Ne pas lancer le simulateur** : elle le fait elle-même. Analyser et builder, c'est OK. Pas de tests unitaires à écrire.
 - Elle aime avancer par premier jet, puis vérifier ensemble.

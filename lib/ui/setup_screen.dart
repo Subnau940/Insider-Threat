@@ -64,7 +64,8 @@ class _SetupScreenState extends State<SetupScreen> {
               ),
               for (final r in roleDisplayOrder)
                 ListTile(
-                  enabled: !s.isRoleTaken(r, exceptPlayer: player),
+                  enabled: !s.isRoleTaken(r, exceptPlayer: player) &&
+                      (r != RoleId.purple || s.count >= purpleMinPlayers),
                   selected: s.roles[player] == r,
                   selectedTileColor: AppColors.surface,
                   shape: RoundedRectangleBorder(

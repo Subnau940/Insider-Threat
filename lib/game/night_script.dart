@@ -8,7 +8,8 @@ List<Player> _attackersOf(GameController c) =>
     c.players.where((p) => p.alive && p.team != Team.blue).toList();
 
 /// The night order for tonight. Roles that were dealt are always called, even
-/// when their holder is out, so that silence never gives anything away.
+/// when their holder is out, so that silence never gives anything away. Roles
+/// that were not dealt are never called.
 List<(StepKind, int)> _nightPlan(GameController c) {
   final ev = c.nightEvent;
   final outage = ev == EventCard.powerOutage;
@@ -311,7 +312,8 @@ GuideStep _buildNight(GameController c) {
     case StepKind.responder:
       final ir = holder(RoleId.incidentResponder);
       final out = gone(ir);
-      final target = c.rawTarget;
+      // A blocked attack (Honeypot, C2 disagreement) leaves no victim to show.
+      final target = c.effectiveVictim;
       final tName = target == null ? '' : c.players[target].name;
       final zero = ev == EventCard.zeroDay;
       final restoreOk = !c.restoreUsed && target != null && !zero;

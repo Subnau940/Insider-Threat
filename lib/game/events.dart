@@ -61,7 +61,7 @@ const Map<EventCard, EventInfo> eventInfos = {
     description:
         'The attackers\' Command & Control server is down. They can no longer coordinate and must act alone.',
     howTo:
-        'Tonight the Red Team (Purple included) is called one attacker at a time. If they all point at the same machine it is compromised, otherwise the attack fails. With 4 attackers, a majority is enough.',
+        'Tonight the Red Team (Purple included) is called one attacker at a time. If they all point at the same machine it is compromised, otherwise the attack fails.',
   ),
   EventCard.honeypot: EventInfo(
     number: 3,
@@ -168,7 +168,7 @@ const Map<EventCard, EventCardFace> eventCardFaces = {
     when: 'TONIGHT',
     flavor: "The attackers' Command & Control server is down.",
     effect:
-        'Attackers are woken **one at a time** and point alone. The target goes down only if they **all** chose the same machine (majority with 4 attackers).',
+        'Attackers are woken **one at a time** and point alone. The target goes down only if they **all** chose the same machine.',
   ),
   EventCard.honeypot: EventCardFace(
     when: 'TONIGHT',

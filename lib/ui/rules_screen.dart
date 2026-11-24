@@ -159,14 +159,13 @@ TextStyle get _bodyStyle =>
 
 /// Paragraph. Words wrapped in `**double stars**` are highlighted.
 class _P extends StatelessWidget {
-  const _P(this.text, {this.accent = AppColors.text});
+  const _P(this.text);
   final String text;
-  final Color accent;
 
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: 8),
-        child: Text.rich(TextSpan(children: richSpans(text, _bodyStyle, accent))),
+        child: Text.rich(TextSpan(children: richSpans(text, _bodyStyle, AppColors.text))),
       );
 }
 
@@ -395,7 +394,7 @@ class _RulesView extends StatelessWidget {
         const _H('Narrator tips'),
         const _List([
           'At night, players never speak: they point, and the Narrator nods.',
-          'Call every role, even if it is not in the game or its player is out. Wait a few seconds each time.',
+          'Call every role that was dealt, even if its player is out. Wait a few seconds each time.',
           'Same tone and same timing every time. Don\'t look at the players who are acting.',
         ]),
 

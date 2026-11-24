@@ -139,6 +139,9 @@ class SetupController extends ChangeNotifier {
     }
     if (countTeam(Team.red) < 1) return 'Add a Red Team card';
     if (countTeam(Team.blue) < 1) return 'Add a Blue Team card';
+    if (count < purpleMinPlayers && countTeam(Team.purple) > 0) {
+      return 'Purple Team needs $purpleMinPlayers players';
+    }
     return null;
   }
 
