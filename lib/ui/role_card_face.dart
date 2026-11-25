@@ -10,12 +10,20 @@ import 'widgets.dart';
 
 /// Official character art, by role. Roles without art leave the space blank.
 const Map<RoleId, String> roleArt = {
-  RoleId.red: 'assets/characters/red_team.png',
   RoleId.incidentResponder: 'assets/characters/incident_responder.png',
   RoleId.socAnalyst: 'assets/characters/soc_analyst.png',
 };
 
+/// Finished card illustrations (frame, art and text in one picture). A role
+/// listed here shows this picture as its whole character side.
+const Map<RoleId, String> roleCardArt = {
+  RoleId.red: 'assets/characters/red_team_card.jpg',
+};
+
 const _radius = BorderRadius.all(Radius.circular(18));
+
+/// Background of the picture cards, so letterboxing blends with the picture.
+const _pictureBg = Color(0xFF303435);
 
 /// Surface, border and glow shared by both sides of the card.
 BoxDecoration _cardDecoration(Color accent, {bool glow = false}) => BoxDecoration(
@@ -56,6 +64,8 @@ class RoleCardFace extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = AppColors.team(info.team);
+    final card = roleCardArt[info.id];
+    if (card != null) return _pictureCard(card, color);
     final art = roleArt[info.id];
     return DecoratedBox(
       decoration: _cardDecoration(color, glow: glow),
@@ -82,7 +92,7 @@ class RoleCardFace extends StatelessWidget {
                 child: Image.asset(
                   art,
                   fit: BoxFit.contain,
-                  semanticLabel: '${info.character}, the ${info.name} character',
+                  semanticLabel: 'The ${info.name} character',
                 ),
               ),
             // Fade the feet into the surface so the name sits on a clean base.
@@ -110,12 +120,9 @@ class RoleCardFace extends StatelessWidget {
                 children: [
                   TeamPerson(info.team),
                   const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(info.character,
-                        style: AppText.mono(15, weight: FontWeight.w700, color: color)),
-                  ),
                   TeamBadge(info.team.label, color),
-                  if (trailing != null) ...[const SizedBox(width: 4), trailing!],
+                  const Spacer(),
+                  if (trailing != null) trailing!,
                 ],
               ),
             ),
@@ -144,6 +151,61 @@ class RoleCardFace extends StatelessWidget {
       ),
     );
   }
+
+  /// The whole side is the finished illustration. The flip button and the
+  /// player's name sit on top of it.
+  Widget _pictureCard(String asset, Color color) => DecoratedBox(
+        decoration: BoxDecoration(
+          color: _pictureBg,
+          borderRadius: _radius,
+          border: Border.all(color: color.withValues(alpha: .45)),
+          boxShadow: [
+            if (glow) BoxShadow(color: color.withValues(alpha: .28), blurRadius: 40, spreadRadius: 2),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: _radius,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Image.asset(
+                  asset,
+                  fit: BoxFit.contain,
+                  semanticLabel: '${info.name} card. ${info.tagline}',
+                ),
+              ),
+              if (trailing != null)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: AppColors.bg.withValues(alpha: .7),
+                      shape: BoxShape.circle,
+                    ),
+                    child: trailing!,
+                  ),
+                ),
+              if (footer != null)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 12,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: AppColors.bg.withValues(alpha: .8),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(footer!, style: AppText.body(12, color: AppColors.textSoft)),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
 }
 
 /// Face-down side, shown before the card turns over.
