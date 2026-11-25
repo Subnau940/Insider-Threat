@@ -163,7 +163,7 @@ class _SetupScreenState extends State<SetupScreen> {
                           ? () => s.setCount(s.count + 1)
                           : null,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 24),
                     NeonButton(
                       label: 'Scan the cards',
                       height: 50,
@@ -194,7 +194,7 @@ class _SetupScreenState extends State<SetupScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 24),
                     Row(
                       children: [
                         const Expanded(child: Lbl('')),
