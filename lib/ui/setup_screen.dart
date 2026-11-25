@@ -197,7 +197,7 @@ class _SetupScreenState extends State<SetupScreen> {
                     const SizedBox(height: 14),
                     Row(
                       children: [
-                        const Expanded(child: Lbl('Clockwise seating order')),
+                        const Expanded(child: Lbl('')),
                         Text('${s.countTeam(Team.red)}',
                             style: AppText.body(14, weight: FontWeight.w600)),
                         const SizedBox(width: 5),

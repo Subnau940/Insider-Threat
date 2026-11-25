@@ -328,8 +328,6 @@ class _SayCardState extends State<SayCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Lbl('Say', color: AppColors.secondarySoft),
-          const SizedBox(height: 10),
           Semantics(
             label: widget.text,
             child: ExcludeSemantics(
