@@ -108,7 +108,7 @@ class RoleCardFace extends StatelessWidget {
               top: trailing == null ? 16 : 8,
               child: Row(
                 children: [
-                  TeamDot(info.team),
+                  TeamPerson(info.team),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(info.character,
@@ -128,7 +128,7 @@ class RoleCardFace extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // Role name as the headline; wraps on two lines if needed.
-                  Text(info.name, style: AppText.ui(42, color: AppColors.text, height: .9)),
+                  Text(info.name.toUpperCase(), style: AppText.ui(42, color: AppColors.text, height: .9)),
                   const SizedBox(height: 10),
                   Text(info.tagline,
                       style: AppText.body(13, color: AppColors.muted, height: 1.35)),
@@ -170,7 +170,7 @@ class RoleCardBack extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Insider\nThreat',
+                  Text('Insider\nThreat'.toUpperCase(),
                       textAlign: TextAlign.center,
                       style: AppText.ui(52, color: AppColors.text, height: .9)),
                   const SizedBox(height: 14),

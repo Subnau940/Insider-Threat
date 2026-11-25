@@ -233,7 +233,6 @@ class GuideStep {
     this.canBack = true,
     this.primaryLabel = 'Next',
     this.primaryStyle = PrimaryStyle.primary,
-    this.sfxName = '',
     this.stepNo = 1,
     this.total = 1,
     this.progressLabel,
@@ -278,7 +277,6 @@ class GuideStep {
   final bool canBack;
   final String primaryLabel;
   final PrimaryStyle primaryStyle;
-  final String sfxName;
 
   final int stepNo;
   final int total;

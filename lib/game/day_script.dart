@@ -42,7 +42,6 @@ GuideStep _buildDay(GameController c) {
         report: downs,
         banner: banner,
         canBack: false,
-        sfxName: 'Day ambience',
         stepNo: stepNo,
         total: total,
       );
@@ -68,7 +67,6 @@ GuideStep _buildDay(GameController c) {
           label: 'Election time left',
         ),
         canContinue: c.ciso != null,
-        sfxName: 'Clock ticking',
         stepNo: stepNo,
         total: total,
         canBack: canBack,
@@ -95,7 +93,6 @@ GuideStep _buildDay(GameController c) {
         event: ev,
         banner: banner,
         primaryLabel: forced ? 'Next' : 'Show the question',
-        sfxName: 'Glitch',
         stepNo: stepNo,
         total: total,
         canBack: canBack,
@@ -127,7 +124,6 @@ GuideStep _buildDay(GameController c) {
         ),
         banner: banner,
         primaryLabel: 'Reveal the answer',
-        sfxName: 'Clock ticking',
         stepNo: stepNo,
         total: total,
         canBack: canBack,
@@ -159,7 +155,6 @@ GuideStep _buildDay(GameController c) {
                     : '${ev.info.title} is blocked',
         primaryStyle:
             happens == true && ev.info.side == EventSide.red ? PrimaryStyle.red : PrimaryStyle.primary,
-        sfxName: 'Glitch',
         stepNo: stepNo,
         total: total,
         canBack: canBack,
@@ -186,7 +181,6 @@ GuideStep _buildDay(GameController c) {
           todo: 'Nothing else to do now: the effect happens tonight. Move on to the debate.',
           banner: banner,
           primaryLabel: 'Next',
-          sfxName: spotted ? 'Lockdown' : 'Glitch',
           stepNo: stepNo,
           total: total,
           canBack: canBack,
@@ -221,7 +215,6 @@ GuideStep _buildDay(GameController c) {
         todo: todo,
         banner: banner,
         primaryLabel: 'Next',
-        sfxName: happens ? 'Glitch' : 'Lockdown',
         stepNo: stepNo,
         total: total,
         canBack: canBack,
@@ -258,7 +251,6 @@ GuideStep _buildDay(GameController c) {
           ),
           banner: banner,
           primaryLabel: i < order.length - 1 ? 'Next speaker' : 'Call the vote',
-          sfxName: 'Clock ticking',
           stepNo: stepNo,
           total: total,
           canBack: canBack,
@@ -280,7 +272,6 @@ GuideStep _buildDay(GameController c) {
         ),
         banner: banner,
         primaryLabel: c.skipVote ? 'End the debate' : 'Call the vote',
-        sfxName: 'Clock ticking',
         stepNo: stepNo,
         total: total,
         canBack: canBack,
@@ -296,7 +287,6 @@ GuideStep _buildDay(GameController c) {
           say: 'Maintenance window: no quarantine today.',
           todo: 'Skip the vote. The game goes straight to the next Attack Phase.',
           primaryLabel: 'Next attack phase',
-          sfxName: 'Lockdown',
           stepNo: stepNo,
           total: total,
           canBack: canBack,
@@ -336,7 +326,6 @@ GuideStep _buildDay(GameController c) {
                 ? 'Nobody is quarantined'
                 : 'Pick a machine',
         primaryStyle: PrimaryStyle.red,
-        sfxName: 'Lockdown',
         stepNo: stepNo,
         total: total,
         canBack: canBack,
@@ -361,7 +350,6 @@ GuideStep _buildDay(GameController c) {
         report: downs,
         canBack: false,
         primaryLabel: 'Continue',
-        sfxName: 'Lockdown',
         stepNo: stepNo,
         total: total,
       );
@@ -441,7 +429,6 @@ GuideStep _buildChain(GameController c) {
               ? 'Nobody goes down'
               : 'Pick a machine',
       primaryStyle: PrimaryStyle.red,
-      sfxName: 'Lockdown',
       progressLabel: 'Chain reaction',
     );
   }
@@ -466,7 +453,6 @@ GuideStep _buildChain(GameController c) {
     canContinue: pick != null,
     canBack: false,
     primaryLabel: pick != null ? 'Next' : 'Pick the CISO',
-    sfxName: 'Lockdown',
     progressLabel: 'Chain reaction',
   );
 }

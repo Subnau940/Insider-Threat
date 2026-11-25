@@ -78,7 +78,7 @@ abstract final class AppText {
 
   /// Titles: Schabo Condensed, bundled. It has a single weight, so [weight]
   /// is ignored (no faux bold), and it runs small for its size, hence [_titleScale].
-  static const _titleScale = 1.15;
+  static const _titleScale = 1.5;
 
   static TextStyle ui(
     double size, {

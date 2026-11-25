@@ -48,7 +48,7 @@ class _RulesScreenState extends State<RulesScreen> {
                       const Icon(Icons.arrow_back_rounded, color: AppColors.text),
                       const SizedBox(width: 12),
                       ExcludeSemantics(
-                        child: Text('Rules', style: AppText.ui(32, weight: FontWeight.w700)),
+                        child: Text('Rules'.toUpperCase(), style: AppText.ui(32, weight: FontWeight.w700)),
                       ),
                       const Spacer(),
                     ],
@@ -150,7 +150,7 @@ class _H extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(top: 22, bottom: 10),
-        child: Text(text, style: AppText.ui(26, weight: FontWeight.w700)),
+        child: Text(text.toUpperCase(), style: AppText.ui(26, weight: FontWeight.w700)),
       );
 }
 
@@ -321,17 +321,17 @@ class _RulesView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(top: 6),
+                  padding: const EdgeInsets.only(top: 2),
                   child: w.team == null
                       ? const Icon(Icons.link_rounded, size: 14, color: AppColors.muted)
-                      : TeamDot(w.team!),
+                      : TeamPerson(w.team!),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(w.name, style: AppText.ui(20, weight: FontWeight.w700)),
+                      Text(w.name.toUpperCase(), style: AppText.ui(20, weight: FontWeight.w700)),
                       const SizedBox(height: 4),
                       Text(w.condition, style: _bodyStyle),
                       if (w.tag != null) ...[
@@ -499,7 +499,7 @@ class _EventTile extends StatelessWidget {
                   style: AppText.mono(13, color: color)),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(info.title, style: AppText.ui(20, weight: FontWeight.w700)),
+                child: Text(info.title.toUpperCase(), style: AppText.ui(20, weight: FontWeight.w700)),
               ),
             ],
           ),
@@ -583,9 +583,9 @@ class _RoleTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              TeamDot(info.team),
+              TeamPerson(info.team),
               const SizedBox(width: 10),
-              Expanded(child: Text(info.name, style: AppText.ui(22, weight: FontWeight.w700))),
+              Expanded(child: Text(info.name.toUpperCase(), style: AppText.ui(22, weight: FontWeight.w700))),
               _Badge(info.team.label, color),
               if (onFlip != null) ...[
                 const SizedBox(width: 4),

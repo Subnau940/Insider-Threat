@@ -70,7 +70,6 @@ GuideStep _buildNight(GameController c) {
         secret: hp == null
             ? null
             : 'Honeypot decoy: ${c.players[hp].name}. If the Red Team targets this machine tonight, the attack fails. Tell nobody.',
-        sfxName: 'Night ambience',
         stepNo: stepNo,
         total: total,
         canBack: canBack,
@@ -101,7 +100,6 @@ GuideStep _buildNight(GameController c) {
                 max: 2,
               ),
         canContinue: out || c.link.length == 2,
-        sfxName: 'Link tone',
         stepNo: stepNo,
         total: total,
         canBack: canBack,
@@ -122,7 +120,6 @@ GuideStep _buildNight(GameController c) {
         todo: linked
             ? 'Tap ${a!.name} and ${b!.name} on the shoulder. Let them see each other, then ask them to close their eyes.'
             : 'Nobody is linked. Read the line anyway and wait a few seconds.',
-        sfxName: 'Link established',
         stepNo: stepNo,
         total: total,
         canBack: canBack,
@@ -178,7 +175,6 @@ GuideStep _buildNight(GameController c) {
               ],
         revealTo: out ? '' : th!.name,
         canContinue: out || picks.length >= need,
-        sfxName: 'Scanner ping',
         stepNo: stepNo,
         total: total,
         canBack: canBack,
@@ -213,7 +209,6 @@ GuideStep _buildNight(GameController c) {
           max: twice ? 2 : 1,
         ),
         canContinue: c.sel('red').length >= max(need, 1),
-        sfxName: 'Alert beep',
         stepNo: stepNo,
         total: total,
         canBack: canBack,
@@ -256,7 +251,6 @@ GuideStep _buildNight(GameController c) {
             ? const []
             : [ResultLine(team: Team.red, text: outcome)],
         canContinue: c.sel(key).isNotEmpty,
-        sfxName: 'Alert beep',
         stepNo: stepNo,
         total: total,
         canBack: canBack,
@@ -291,7 +285,6 @@ GuideStep _buildNight(GameController c) {
                 noneSelected: c.hasNone('purple'),
               ),
         canContinue: out || c.sel('purple').isNotEmpty || c.hasNone('purple'),
-        sfxName: 'Glitch',
         stepNo: stepNo,
         total: total,
         canBack: canBack,
@@ -355,7 +348,6 @@ GuideStep _buildNight(GameController c) {
               )
             : null,
         canContinue: out || !(c.kill && killOk) || c.sel('kill').isNotEmpty,
-        sfxName: 'Keyboard clicks',
         stepNo: stepNo,
         total: total,
         canBack: canBack,
@@ -370,7 +362,6 @@ GuideStep _buildNight(GameController c) {
         say: 'The night is over. Everyone, open your eyes.',
         todo: 'The night ambience fades out by itself. Move on to the morning report.',
         primaryLabel: 'Morning report',
-        sfxName: 'Sunrise chime',
         stepNo: stepNo,
         total: total,
         canBack: canBack,

@@ -52,7 +52,7 @@ class _SettingsSheet extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Settings', style: AppText.ui(28, weight: FontWeight.w700)),
+                Text('Settings'.toUpperCase(), style: AppText.ui(28, weight: FontWeight.w700)),
                 const SizedBox(height: 18),
                 const Lbl('Sound'),
                 const SizedBox(height: 4),

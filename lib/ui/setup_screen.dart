@@ -44,7 +44,7 @@ class _SetupScreenState extends State<SetupScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Reset the players?', style: AppText.ui(20, weight: FontWeight.w700)),
+        title: Text('Reset the players?'.toUpperCase(), style: AppText.ui(20, weight: FontWeight.w700)),
         content: Text('Every name and role card will be cleared.', style: AppText.body(15)),
         actions: [
           TextButton(
@@ -99,7 +99,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  leading: TeamDot(r.info.team),
+                  leading: TeamPerson(r.info.team),
                   minLeadingWidth: 12,
                   title: Text(r.info.name,
                       style: AppText.body(16, weight: FontWeight.w600)),
@@ -140,7 +140,6 @@ class _SetupScreenState extends State<SetupScreen> {
                           style: AppText.body(15, color: AppColors.muted)),
                     ),
                     const Spacer(),
-                    const TagChip('Setup'),
                     const SizedBox(width: 4),
                     const SettingsButton(),
                   ],
@@ -151,11 +150,12 @@ class _SetupScreenState extends State<SetupScreen> {
                   keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
                   children: [
-                    Text('Set the table',
+                    Text('Set the table'.toUpperCase(),
                         style: AppText.ui(32, weight: FontWeight.w700, height: 1.05)),
                     const SizedBox(height: 14),
                     _CountRow(
                       count: s.count,
+                      onInfo: () => _showRecommended(context, s.count, rec),
                       onMinus: s.count > minPlayers
                           ? () => s.setCount(s.count - 1)
                           : null,
@@ -163,12 +163,7 @@ class _SetupScreenState extends State<SetupScreen> {
                           ? () => s.setCount(s.count + 1)
                           : null,
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Recommended: ${rec.red} Red${rec.purple > 0 ? ' · ${rec.purple} Purple' : ''} · ${rec.special.length} special · ${rec.defenders} Defenders',
-                      style: AppText.body(14, color: AppColors.muted, height: 1.5),
-                    ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                     NeonButton(
                       label: 'Scan the cards',
                       height: 50,
@@ -206,17 +201,17 @@ class _SetupScreenState extends State<SetupScreen> {
                         Text('${s.countTeam(Team.red)}',
                             style: AppText.body(14, weight: FontWeight.w600)),
                         const SizedBox(width: 5),
-                        const TeamDot(Team.red),
+                        const TeamPerson(Team.red),
                         const SizedBox(width: 12),
                         Text('${s.countTeam(Team.blue)}',
                             style: AppText.body(14, weight: FontWeight.w600)),
                         const SizedBox(width: 5),
-                        const TeamDot(Team.blue),
+                        const TeamPerson(Team.blue),
                         const SizedBox(width: 12),
                         Text('${s.countTeam(Team.purple)}',
                             style: AppText.body(14, weight: FontWeight.w600)),
                         const SizedBox(width: 5),
-                        const TeamDot(Team.purple),
+                        const TeamPerson(Team.purple),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -275,9 +270,11 @@ class _CountRow extends StatelessWidget {
     required this.count,
     required this.onMinus,
     required this.onPlus,
+    required this.onInfo,
   });
 
   final int count;
+  final VoidCallback onInfo;
   final VoidCallback? onMinus;
   final VoidCallback? onPlus;
 
@@ -291,9 +288,15 @@ class _CountRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Expanded(
-              child: Text('Players', style: AppText.body(16, weight: FontWeight.w700)),
+            Text('Players', style: AppText.body(16, weight: FontWeight.w700)),
+            IconButton(
+              tooltip: 'Recommended roles',
+              onPressed: onInfo,
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.info_outline_rounded,
+                  size: 20, color: AppColors.muted),
             ),
+            const Spacer(),
             IconButton(
               tooltip: 'Remove a player',
               onPressed: onMinus,
@@ -353,9 +356,9 @@ class _PlayerRow extends StatelessWidget {
         child: Row(
           children: [
             if (role != null)
-              TeamDot(role!.info.team)
+              TeamPerson(role!.info.team)
             else
-              const SizedBox(width: 10),
+              const Icon(Icons.person, size: 18, color: AppColors.muted),
             const SizedBox(width: 12),
             Expanded(
               child: TextField(
@@ -400,4 +403,45 @@ class _PlayerRow extends StatelessWidget {
           ],
         ),
       );
+}
+
+/// Bottom sheet listing the rulebook composition for [players].
+void _showRecommended(BuildContext context, int players, Composition rec) {
+  Widget row(RoleId role, int n) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          children: [
+            TeamPerson(role.info.team),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(role.info.name,
+                  style: AppText.body(16, weight: FontWeight.w600)),
+            ),
+            Text('×$n',
+                style: AppText.mono(16,
+                    weight: FontWeight.w700, color: AppColors.text)),
+          ],
+        ),
+      );
+
+  showModalBottomSheet<void>(
+    context: context,
+    builder: (_) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Recommended'.toUpperCase(), style: AppText.ui(28, weight: FontWeight.w700)),
+            const SizedBox(height: 4),
+            Text('For $players players, from the rulebook.',
+                style: AppText.body(14, color: AppColors.muted)),
+            const SizedBox(height: 12),
+            for (final e in rec.counts.entries) row(e.key, e.value),
+          ],
+        ),
+      ),
+    ),
+  );
 }

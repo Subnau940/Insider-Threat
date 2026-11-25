@@ -28,7 +28,6 @@ class _Ending {
     required this.colors,
     required this.fx,
     required this.sfx,
-    required this.mood,
   });
 
   final String label;
@@ -45,7 +44,6 @@ class _Ending {
   final List<Color> colors;
   final _Fx fx;
   final SfxId sfx;
-  final Mood mood;
 
   static _Ending of(Winner w) => switch (w) {
         Winner.blue => const _Ending(
@@ -60,7 +58,6 @@ class _Ending {
             colors: [Picton.c100, Picton.c300, Picton.c500],
             fx: _Fx.shield,
             sfx: SfxId.revealBlue,
-            mood: Mood.endBlue,
           ),
         Winner.red => const _Ending(
             label: 'Red Team wins',
@@ -74,7 +71,6 @@ class _Ending {
             colors: [Signal.c200, Signal.c400, Signal.c500],
             fx: _Fx.breach,
             sfx: SfxId.revealRed,
-            mood: Mood.endRed,
           ),
         Winner.purple => const _Ending(
             label: 'Purple Team wins',
@@ -88,7 +84,6 @@ class _Ending {
             colors: [Blush.c200, Violet.c400, Blush.c500],
             fx: _Fx.spotlight,
             sfx: SfxId.revealChaos,
-            mood: Mood.endRed,
           ),
         Winner.vpn => const _Ending(
             label: 'VPN Tunnel wins',
@@ -102,7 +97,6 @@ class _Ending {
             colors: [Lime.c200, Lime.c400, Picton.c300],
             fx: _Fx.tunnel,
             sfx: SfxId.revealChaos,
-            mood: Mood.endBlue,
           ),
         Winner.outage => const _Ending(
             label: 'Nobody wins',
@@ -116,7 +110,6 @@ class _Ending {
             colors: [Cod.c50, Cod.c300, Cod.c500],
             fx: _Fx.outage,
             sfx: SfxId.out,
-            mood: Mood.endRed,
           ),
       };
 }
@@ -209,9 +202,12 @@ class _EndScreenState extends State<EndScreen> with TickerProviderStateMixin {
     final players = [...game.players]
       ..sort((a, b) => (_won(b) ? 1 : 0) - (_won(a) ? 1 : 0));
 
-    return NeonBackground(
-      mood: _end.mood,
-      child: AnimatedBuilder(
+    // Full bleed: the effects run under the status bar too, so the top of
+    // the screen blends in instead of showing the NeonBackground glow.
+    final top = MediaQuery.paddingOf(context).top;
+    return Scaffold(
+      backgroundColor: AppColors.bg,
+      body: AnimatedBuilder(
         animation: Listenable.merge([_intro, _loop]),
         builder: (context, _) {
           final t = _intro.value;
@@ -228,13 +224,21 @@ class _EndScreenState extends State<EndScreen> with TickerProviderStateMixin {
                       intro: t,
                       loop: _loop.value,
                       impact: _impact,
+                      focusY: top + 136,
                     ),
                   ),
                 ),
               ),
-              Transform.translate(
-                offset: _shake(t),
-                child: _content(t, players),
+              SafeArea(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: Transform.translate(
+                      offset: _shake(t),
+                      child: _content(t, players),
+                    ),
+                  ),
+                ),
               ),
               // Impact flash.
               if (flash > 0)
@@ -582,6 +586,7 @@ class _BackdropPainter extends CustomPainter {
     required this.intro,
     required this.loop,
     required this.impact,
+    required this.focusY,
   });
 
   final _Fx fx;
@@ -589,6 +594,9 @@ class _BackdropPainter extends CustomPainter {
   final double intro;
   final double loop;
   final double impact;
+
+  /// Height of the emblem's centre, where the rings start.
+  final double focusY;
 
   /// Fixed seed so streaks and stars keep their place from frame to frame.
   static final _seeds = List.generate(
@@ -601,7 +609,8 @@ class _BackdropPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     // The emblem sits around here.
-    final focus = Offset(size.width / 2, 136);
+    final focus = Offset(size.width / 2, focusY);
+    _topGlow(canvas, size);
     switch (fx) {
       case _Fx.shield:
         _grid(canvas, size);
@@ -628,6 +637,20 @@ class _BackdropPainter extends CustomPainter {
         _crtOff(canvas, size);
     }
     _vignette(canvas, size);
+  }
+
+  /// Soft glow of the winner's colour from the top edge.
+  void _topGlow(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = RadialGradient(
+          center: const Alignment(0, -1.1),
+          radius: 1.1,
+          colors: [color.withValues(alpha: .22), color.withValues(alpha: 0)],
+        ).createShader(rect),
+    );
   }
 
   void _grid(Canvas canvas, Size size) {
@@ -859,7 +882,7 @@ class _Stat extends StatelessWidget {
           children: [
             Lbl(label),
             const SizedBox(height: 4),
-            Text(value, style: AppText.ui(34, color: color, height: 1)),
+            Text(value.toUpperCase(), style: AppText.ui(34, color: color, height: 1)),
           ],
         ),
       );
@@ -904,7 +927,7 @@ class _RoleCell extends StatelessWidget {
       ),
       child: Row(
         children: [
-          TeamDot(player.team),
+          TeamPerson(player.team),
           const SizedBox(width: 10),
           Expanded(
             child: Column(

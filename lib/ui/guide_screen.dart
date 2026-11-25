@@ -73,9 +73,6 @@ class GuideScreen extends StatelessWidget {
       onPressed: step.canContinue ? game.primary : null,
     );
     final landscape = isShortLandscape(context);
-    final sound = step.sfxName.isEmpty
-        ? null
-        : _SoundPlaceholder(name: step.sfxName, stacked: landscape);
 
     if (landscape) {
       // Phone held sideways: the step scrolls on the left, actions stay in a
@@ -94,7 +91,6 @@ class GuideScreen extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    if (sound != null) ...[sound, const SizedBox(height: 10)],
                     primary,
                     const SizedBox(height: 10),
                     back,
@@ -117,7 +113,6 @@ class GuideScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
             child: Column(
               children: [
-                if (sound != null) ...[sound, const SizedBox(height: 10)],
                 Row(
                   children: [
                     Expanded(child: back),
@@ -160,7 +155,7 @@ class _StepBody extends StatelessWidget {
           Lbl(step.kicker),
           const SizedBox(height: 6),
           Text(
-            step.title,
+            step.title.toUpperCase(),
             style: AppText.ui(34, weight: FontWeight.w700, height: 1.04),
           ),
           const SizedBox(height: 6),
@@ -169,7 +164,7 @@ class _StepBody extends StatelessWidget {
             runSpacing: 4,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              if (step.team != null) TeamDot(step.team!),
+              if (step.team != null) TeamPerson(step.team!),
               if (step.sub.isNotEmpty)
                 Text(step.sub, style: AppText.body(15, color: AppColors.textSoft)),
               if (step.tag != null) TagChip(step.tag!, danger: true),
@@ -231,46 +226,6 @@ class _StepBody extends StatelessWidget {
           blocks[i],
         ],
       ],
-    );
-  }
-}
-
-/// Shows which sound belongs to this step. It is deliberately not presented
-/// as a play button: wired sounds play by themselves.
-class _SoundPlaceholder extends StatelessWidget {
-  const _SoundPlaceholder({required this.name, this.stacked = false});
-
-  /// Sounds the app already plays on its own.
-  static const _wired = {'Night ambience', 'Day ambience'};
-
-  final String name;
-
-  String get _note => _wired.contains(name) ? 'Plays by itself' : 'Audio coming soon';
-
-  /// Narrow side rail (landscape): the note goes under the sound name.
-  final bool stacked;
-
-  @override
-  Widget build(BuildContext context) {
-    final title = Row(
-      children: [
-        const Icon(Icons.graphic_eq, size: 16, color: AppColors.muted),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            name,
-            maxLines: stacked ? 2 : 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppText.body(13, color: AppColors.muted),
-          ),
-        ),
-        if (!stacked) Lbl(_note),
-      ],
-    );
-    if (!stacked) return title;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [title, const SizedBox(height: 2), Lbl(_note)],
     );
   }
 }

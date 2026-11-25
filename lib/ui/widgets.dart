@@ -40,36 +40,51 @@ class NeonBackground extends StatelessWidget {
       Mood.endRed => AppColors.teamRed.withValues(alpha: .28),
     };
     return Scaffold(
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          color: AppColors.bg,
-          gradient: RadialGradient(
-            center: const Alignment(1, 1.05),
-            radius: .9,
-            colors: [
-              AppColors.secondary.withValues(alpha: .10),
-              AppColors.secondary.withValues(alpha: 0),
-            ],
-          ),
-        ),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 400),
-          decoration: BoxDecoration(
-            gradient: RadialGradient(
-              center: const Alignment(0, -1.15),
-              radius: 1.0,
-              colors: [glow, glow.withValues(alpha: 0)],
+      backgroundColor: AppColors.bg,
+      body: Stack(
+        children: [
+          // Faint illustration under the glows, kept low so text stays readable.
+          const Positioned.fill(
+            child: Image(
+              image: AssetImage('assets/brand/background.webp'),
+              fit: BoxFit.cover,
+              alignment: Alignment.centerRight,
+              opacity: AlwaysStoppedAnimation(.28),
             ),
           ),
-          child: SafeArea(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxWidth),
-                child: child,
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(1, 1.05),
+                  radius: .9,
+                  colors: [
+                    AppColors.secondary.withValues(alpha: .10),
+                    AppColors.secondary.withValues(alpha: 0),
+                  ],
+                ),
+              ),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 400),
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: const Alignment(0, -1.15),
+                    radius: 1.0,
+                    colors: [glow, glow.withValues(alpha: 0)],
+                  ),
+                ),
+                child: SafeArea(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: maxWidth),
+                      child: child,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -84,10 +99,10 @@ class Lbl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(
-        text,
-        textAlign: align,
-        style: AppText.body(13, color: color, height: 1.35),
-      );
+    text,
+    textAlign: align,
+    style: AppText.body(13, color: color, height: 1.35),
+  );
 }
 
 class TagChip extends StatelessWidget {
@@ -119,26 +134,22 @@ class TagChip extends StatelessWidget {
   }
 }
 
-class TeamDot extends StatelessWidget {
-  const TeamDot(this.team, {super.key});
+class TeamPerson extends StatelessWidget {
+  const TeamPerson(this.team, {super.key, this.size = 18});
 
   final Team team;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
     final c = AppColors.team(team);
     return Semantics(
       label: team.label,
-      child: Container(
-        width: 10,
-        height: 10,
-        decoration: BoxDecoration(
-          color: c,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(color: c.withValues(alpha: .7), blurRadius: 8),
-          ],
-        ),
+      child: Icon(
+        Icons.person,
+        size: size,
+        color: c,
+        shadows: [Shadow(color: c.withValues(alpha: .7), blurRadius: 8)],
       ),
     );
   }
@@ -175,13 +186,13 @@ class NeonButton extends StatelessWidget {
     final bg = !enabled
         ? AppColors.disabledBg
         : variant == NeonVariant.ghost
-            ? AppColors.surface
-            : null;
+        ? AppColors.surface
+        : null;
     final fg = !enabled
         ? AppColors.disabledText
         : variant == NeonVariant.ghost
-            ? AppColors.text
-            : AppColors.onAccent;
+        ? AppColors.text
+        : AppColors.onAccent;
     final radius = BorderRadius.circular(16);
     return Material(
       color: Colors.transparent,
@@ -191,9 +202,6 @@ class NeonButton extends StatelessWidget {
           color: bg,
           gradient: gradient,
           borderRadius: radius,
-          border: variant == NeonVariant.ghost && enabled
-              ? Border.all(color: AppColors.line)
-              : null,
         ),
         child: InkWell(
           borderRadius: radius,
@@ -228,24 +236,24 @@ class SegBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ExcludeSemantics(
-        child: Row(
-          children: [
-            for (var i = 0; i < total; i++) ...[
-              if (i > 0) const SizedBox(width: 6),
-              Expanded(
-                child: Container(
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: i < current ? null : AppColors.line,
-                    gradient: i < current ? AppColors.primaryGradient : null,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+    child: Row(
+      children: [
+        for (var i = 0; i < total; i++) ...[
+          if (i > 0) const SizedBox(width: 6),
+          Expanded(
+            child: Container(
+              height: 4,
+              decoration: BoxDecoration(
+                color: i < current ? null : AppColors.line,
+                gradient: i < current ? AppColors.primaryGradient : null,
+                borderRadius: BorderRadius.circular(2),
               ),
-            ],
-          ],
-        ),
-      );
+            ),
+          ),
+        ],
+      ],
+    ),
+  );
 }
 
 /// The line the Narrator reads, typed out. Its height is reserved up front so
@@ -358,10 +366,10 @@ class PickerGrid extends StatelessWidget {
   final VoidCallback onNone;
 
   Color get _accent => switch (spec.style) {
-        PickStyle.blue => AppColors.teamBlue,
-        PickStyle.red => AppColors.teamRed,
-        PickStyle.violet => AppColors.primary,
-      };
+    PickStyle.blue => AppColors.teamBlue,
+    PickStyle.red => AppColors.teamRed,
+    PickStyle.violet => AppColors.primary,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -389,7 +397,7 @@ class PickerGrid extends StatelessWidget {
               onTap: t.locked ? null : () => onPick(t.id),
               child: Row(
                 children: [
-                  TeamDot(t.team),
+                  TeamPerson(t.team),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -496,50 +504,70 @@ class ToolsRow extends StatelessWidget {
   final VoidCallback onRestore;
   final VoidCallback onKill;
 
-  Widget _tool(String title, String sub, bool on, bool enabled, Color accent,
-          VoidCallback cb) =>
-      Expanded(
-        child: SizedBox(
-          height: 66,
-          child: _Tile(
-            selected: on,
-            accent: accent,
-            onTap: enabled ? cb : null,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title.toUpperCase(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppText.body(14, weight: FontWeight.w700, spacing: .6),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  sub,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppText.body(12,
-                      weight: FontWeight.w400, color: AppColors.muted),
-                ),
-              ],
+  Widget _tool(
+    String title,
+    String sub,
+    bool on,
+    bool enabled,
+    Color accent,
+    VoidCallback cb,
+  ) => Expanded(
+    child: SizedBox(
+      height: 66,
+      child: _Tile(
+        selected: on,
+        accent: accent,
+        onTap: enabled ? cb : null,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.body(14, weight: FontWeight.w700, spacing: .6),
             ),
-          ),
+            const SizedBox(height: 5),
+            Text(
+              sub,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.body(
+                12,
+                weight: FontWeight.w400,
+                color: AppColors.muted,
+              ),
+            ),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) => Row(
-        children: [
-          _tool('Backup restore', spec.restoreSub, spec.restoreOn,
-              spec.restoreEnabled, AppColors.teamBlue, onRestore),
-          const SizedBox(width: 8),
-          _tool('Kill process', spec.killSub, spec.killOn, spec.killEnabled,
-              AppColors.danger, onKill),
-        ],
-      );
+    children: [
+      _tool(
+        'Backup restore',
+        spec.restoreSub,
+        spec.restoreOn,
+        spec.restoreEnabled,
+        AppColors.teamBlue,
+        onRestore,
+      ),
+      const SizedBox(width: 8),
+      _tool(
+        'Kill process',
+        spec.killSub,
+        spec.killOn,
+        spec.killEnabled,
+        AppColors.danger,
+        onKill,
+      ),
+    ],
+  );
 }
 
 class CountdownClock extends StatefulWidget {
@@ -611,20 +639,21 @@ class _CountdownClockState extends State<CountdownClock> {
           const SizedBox(height: 6),
           Text(
             _text,
-            style: AppText.mono(
-              widget.spec.controls ? 60 : 44,
-              weight: FontWeight.w700,
-              color: over ? AppColors.danger : AppColors.text,
-              height: 1,
-            ).copyWith(
-              fontFeatures: const [FontFeature.tabularFigures()],
-              shadows: [
-                Shadow(
-                  color: AppColors.primary.withValues(alpha: .35),
-                  blurRadius: 28,
+            style:
+                AppText.mono(
+                  widget.spec.controls ? 60 : 44,
+                  weight: FontWeight.w700,
+                  color: over ? AppColors.danger : AppColors.text,
+                  height: 1,
+                ).copyWith(
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                  shadows: [
+                    Shadow(
+                      color: AppColors.primary.withValues(alpha: .35),
+                      blurRadius: 28,
+                    ),
+                  ],
                 ),
-              ],
-            ),
           ),
           const SizedBox(height: 12),
           ClipRRect(
@@ -692,57 +721,87 @@ class DownList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final nameStyle =
-        AppText.ui(compact ? 18 : 28, weight: FontWeight.w700, height: 1);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.danger.withValues(alpha: .08),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.danger.withValues(alpha: .45)),
       ),
       child: entries.isEmpty
-          ? Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Quiet night', style: AppText.ui(22, weight: FontWeight.w700)),
-                Flexible(
-                  child: Text(
+          ? Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Quiet night',
+                      style: AppText.body(compact ? 15 : 17, weight: FontWeight.w600),
+                    ),
+                  ),
+                  Text(
                     'No machine offline',
-                    textAlign: TextAlign.right,
                     style: AppText.body(13, color: AppColors.textSoft),
                   ),
-                ),
-              ],
+                ],
+              ),
             )
           : Column(
               children: [
-                for (var i = 0; i < entries.length; i++)
-                  Padding(
-                    padding: EdgeInsets.only(top: i == 0 ? 0 : 14),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: Text(
-                            entries[i].name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: nameStyle,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        TeamDot(entries[i].team),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          flex: 2,
-                          child: Text(entries[i].role, style: AppText.body(13)),
-                        ),
-                      ],
+                for (var i = 0; i < entries.length; i++) ...[
+                  if (i > 0)
+                    Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: AppColors.danger.withValues(alpha: .2),
                     ),
-                  ),
+                  _DownRow(entry: entries[i], compact: compact),
+                ],
               ],
             ),
+    );
+  }
+}
+
+class _DownRow extends StatelessWidget {
+  const _DownRow({required this.entry, required this.compact});
+
+  final DownEntry entry;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.team(entry.team);
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: compact ? 10 : 14),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              entry.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.body(compact ? 15 : 17, weight: FontWeight.w600),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: c.withValues(alpha: .12),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: c.withValues(alpha: .5)),
+              ),
+              child: Text(
+                entry.role,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.body(13, weight: FontWeight.w600, color: c),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -754,25 +813,25 @@ class ResultRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.line),
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: AppColors.line),
+    ),
+    child: Row(
+      children: [
+        TeamPerson(line.team),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            line.text,
+            style: AppText.body(14, weight: FontWeight.w600, height: 1.35),
+          ),
         ),
-        child: Row(
-          children: [
-            TeamDot(line.team),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                line.text,
-                style: AppText.body(14, weight: FontWeight.w600, height: 1.35),
-              ),
-            ),
-          ],
-        ),
-      );
+      ],
+    ),
+  );
 }
 
 /// Beginner help: what the Narrator does at this step. Not read out loud.
@@ -783,29 +842,42 @@ class TipCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 2),
-            child: Icon(Icons.lightbulb_outline_rounded, size: 16, color: AppColors.secondarySoft),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text.rich(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Padding(
+        padding: EdgeInsets.only(top: 2),
+        child: Icon(
+          Icons.lightbulb_outline_rounded,
+          size: 16,
+          color: AppColors.secondarySoft,
+        ),
+      ),
+      const SizedBox(width: 8),
+      Expanded(
+        child: Text.rich(
+          TextSpan(
+            children: [
               TextSpan(
-                children: [
-                  TextSpan(
-                    text: 'Do  ',
-                    style: AppText.body(14, weight: FontWeight.w700, color: AppColors.secondarySoft),
-                  ),
-                  TextSpan(text: text),
-                ],
+                text: 'Do  ',
+                style: AppText.body(
+                  14,
+                  weight: FontWeight.w700,
+                  color: AppColors.secondarySoft,
+                ),
               ),
-              style: AppText.body(14, weight: FontWeight.w400, color: AppColors.muted, height: 1.5),
-            ),
+              TextSpan(text: text),
+            ],
           ),
-        ],
-      );
+          style: AppText.body(
+            14,
+            weight: FontWeight.w400,
+            color: AppColors.muted,
+            height: 1.5,
+          ),
+        ),
+      ),
+    ],
+  );
 }
 
 /// Narrator-only information, never read out loud.
@@ -816,22 +888,22 @@ class SecretCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.primary.withValues(alpha: .12),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.primary.withValues(alpha: .5)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Lbl('Narrator only', color: AppColors.primarySoft),
-            const SizedBox(height: 6),
-            Text(text, style: AppText.body(14, height: 1.4)),
-          ],
-        ),
-      );
+    width: double.infinity,
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: AppColors.primary.withValues(alpha: .12),
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColors.primary.withValues(alpha: .5)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Lbl('Narrator only', color: AppColors.primarySoft),
+        const SizedBox(height: 6),
+        Text(text, style: AppText.body(14, height: 1.4)),
+      ],
+    ),
+  );
 }
 
 class BannerCard extends StatelessWidget {
@@ -841,16 +913,20 @@ class BannerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.danger.withValues(alpha: .10),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.danger.withValues(alpha: .4)),
-        ),
-        child: Text(
-          text,
-          style: AppText.body(14, weight: FontWeight.w600, color: AppColors.dangerSoft),
-        ),
-      );
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+    decoration: BoxDecoration(
+      color: AppColors.danger.withValues(alpha: .10),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: AppColors.danger.withValues(alpha: .4)),
+    ),
+    child: Text(
+      text,
+      style: AppText.body(
+        14,
+        weight: FontWeight.w600,
+        color: AppColors.dangerSoft,
+      ),
+    ),
+  );
 }

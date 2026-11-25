@@ -163,7 +163,7 @@ class _ScanScreenState extends State<ScanScreen> {
                     Lbl('Seat ${_player + 1} · card of'),
                     const SizedBox(height: 4),
                     Text(
-                      _setup.displayName(_player),
+                      _setup.displayName(_player).toUpperCase(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppText.ui(32, weight: FontWeight.w700, height: 1.05),
@@ -172,7 +172,7 @@ class _ScanScreenState extends State<ScanScreen> {
                     Row(
                       children: [
                         if (role != null) ...[
-                          TeamDot(role.info.team),
+                          TeamPerson(role.info.team),
                           const SizedBox(width: 8),
                         ],
                         Text(
@@ -430,10 +430,9 @@ class _SeatChip extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (role != null)
-                        TeamDot(role!.info.team)
+                        TeamPerson(role!.info.team)
                       else
-                        const Icon(Icons.radio_button_unchecked,
-                            size: 12, color: AppColors.muted),
+                        const Icon(Icons.person, size: 18, color: AppColors.muted),
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(

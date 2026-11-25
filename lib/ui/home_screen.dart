@@ -76,7 +76,11 @@ class HomeScreen extends StatelessWidget {
             semanticsLabel: 'Insider Threat',
           ),
         ),
+                SizedBox(height: compact ? 16 : 24),
+
+        const TagChip('Narrator companion'),
         SizedBox(height: compact ? 24 : 44),
+
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 300),
           child: Text(
@@ -86,8 +90,6 @@ class HomeScreen extends StatelessWidget {
                 weight: FontWeight.w400, color: AppColors.textSoft, height: 1.5),
           ),
         ),
-        SizedBox(height: compact ? 16 : 24),
-        const TagChip('Narrator companion'),
       ];
 
   List<Widget> _actions(BuildContext context) => [

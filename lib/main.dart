@@ -95,7 +95,7 @@ class _AppRootState extends State<AppRoot> {
     final quit = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Quit this game?', style: AppText.ui(20, weight: FontWeight.w700)),
+        title: Text('Quit this game?'.toUpperCase(), style: AppText.ui(20, weight: FontWeight.w700)),
         content: Text('The current game will be lost.', style: AppText.body(15)),
         actions: [
           TextButton(
